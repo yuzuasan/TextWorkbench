@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="TextWorkbench.Tests/TextWorkbench.Tests.csproj" />
   <Project Path="TextWorkbench/TextWorkbench.csproj" />
 </Solution>
