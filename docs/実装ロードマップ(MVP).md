@@ -1,6 +1,6 @@
 ## 全体像
 
-MVPを次の**27ステップ**に分ける。
+MVPを次の**28ステップ**に分ける。
 
 | Phase | Step | 作業ステップ                         | 完了時の状態              |
 | ----- | ---: | ------------------------------ | ------------------- |
@@ -11,7 +11,7 @@ MVPを次の**27ステップ**に分ける。
 | 1     |    5 | Command基盤・通知基盤                 | Commandを実行できる       |
 | 1     |    6 | Phase 1統合・動作確認                 | 基盤完成                |
 | 2     |    7 | File / Encoding / LineEnding基盤 | ファイルを正しく解釈できる       |
-| 2     |    8 | Open実装                         | ファイルを開ける            |
+| 2     |    8 | New / Open実装                   | 新規Document・ファイルを開ける |
 | 2     |    9 | AvalonEdit連携                   | テキストを編集できる          |
 | 2     |   10 | Modified状態管理                   | 未保存状態を管理できる         |
 | 2     |   11 | Save実装                         | 上書き保存できる            |
@@ -24,15 +24,14 @@ MVPを次の**27ステップ**に分ける。
 | 3     |   18 | Find Next / Previous           | 検索結果を移動できる          |
 | 3     |   19 | ReplaceService                 | 置換ロジックが動く           |
 | 3     |   20 | Replace / Replace All UI       | 置換できる               |
-| 3     |   21 | Regex検索・置換                     | 正規表現が使える            |
-| 3     |   22 | Phase 3統合・動作確認                 | 検索・置換完成             |
-| 4     |   23 | Diffモデル・DiffService            | 差分計算できる             |
-| 4     |   24 | DiffPlex Adapter               | DiffPlexと接続できる      |
-| 4     |   25 | DiffTab / Diff表示               | 2ファイル比較できる          |
-| 4     |   26 | Diff Navigation                | 次/前の差分へ移動できる        |
-| 4     |   27 | MVP統合・受入確認                     | TextWorkbench MVP完成 |
-
-これなら**1ステップをさらに1～数個のコミットに分ける**ことができます。
+| 3     |   21 | Text Info                      | テキスト情報を確認できる        |
+| 3     |   22 | Regex検索・置換                     | 正規表現が使える            |
+| 3     |   23 | Phase 3統合・動作確認                 | 検索・置換・Text Info完成   |
+| 4     |   24 | Diffモデル・DiffService            | 差分計算できる             |
+| 4     |   25 | DiffPlex Adapter               | DiffPlexと接続できる      |
+| 4     |   26 | DiffTab / Diff表示               | 2ファイル比較できる          |
+| 4     |   27 | Diff Navigation                | 次/前の差分へ移動できる        |
+| 4     |   28 | MVP統合・受入確認                     | TextWorkbench MVP完成 |
 
 ---
 
@@ -175,12 +174,14 @@ Phase 2終了時点では「普通のテキストエディタとして使える�
 
 ---
 
-### Step 8：Open実装
+### Step 8：New / Open実装
 
 実装：
 
+* `NewDocumentUseCase`
 * Open File Dialog
-* OpenDocumentUseCase
+* `OpenDocumentUseCase`
+* 新規Document作成
 * ファイル読み込み
 * Encoding判定
 * 改行コード判定
@@ -192,7 +193,7 @@ Phase 2終了時点では「普通のテキストエディタとして使える�
 
 **完了条件：**
 
-> `.txt`を開くと新しいDocumentTabに内容が表示される。
+> 新規Documentを作成でき、`.txt`を開くと新しいDocumentTabに内容が表示される。
 
 ---
 
@@ -417,7 +418,35 @@ Open
 
 ---
 
-### Step 21：Regex検索・置換
+### Step 21：Text Info
+
+実装：
+
+* `ITextInfoService`
+* `TextInfoService`
+* `GetTextInfoUseCase`
+* Text Info Dialog
+* LineCount
+* CharacterCount
+* ByteCount
+* Encoding
+* LineEnding
+
+Text InfoはDocumentの現在内容に関する情報を表示する。
+
+詳細設計では、Text InfoをStatusBarには表示せず、PresentationのDialogで表示する。
+
+ByteCountは現在のEncodingとLineEndingで保存した場合のバイト数として算出する。
+
+CharacterCountはUnicode code point数、LineCountは論理行数として扱う。
+
+**完了条件：**
+
+> 現在のDocumentについて、行数・文字数・Byte数・Encoding・LineEndingを確認できる。
+
+---
+
+### Step 22：Regex検索・置換
 
 実装：
 
@@ -435,7 +464,7 @@ Open
 
 ---
 
-### Step 22：Phase 3統合
+### Step 23：Phase 3統合
 
 シナリオ：
 
@@ -451,6 +480,8 @@ Find Previous
 Replace
  ↓
 Replace All
+ ↓
+Text Info
  ↓
 Save
 ```
@@ -469,7 +500,7 @@ Save
 
 DiffはMVPの主役であり、DiffTabとして扱う設計です。基本設計ではMVPの比較対象を主として保存済みFile A / File Bとしています。
 
-### Step 23：Diffモデル・DiffService
+### Step 24：Diffモデル・DiffService
 
 実装：
 
@@ -486,7 +517,7 @@ DiffはMVPの主役であり、DiffTabとして扱う設計です。基本設計
 
 ---
 
-### Step 24：DiffPlex Adapter
+### Step 25：DiffPlex Adapter
 
 実装：
 
@@ -502,7 +533,7 @@ DiffPlexのAPIはInfrastructure Adapterへ閉じ込め、Application側はDiffPl
 
 ---
 
-### Step 25：DiffTab / Diff表示
+### Step 26：DiffTab / Diff表示
 
 実装：
 
@@ -522,7 +553,7 @@ DiffPlexのAPIはInfrastructure Adapterへ閉じ込め、Application側はDiffPl
 
 ---
 
-### Step 26：Diff Navigation
+### Step 27：Diff Navigation
 
 実装：
 
@@ -539,7 +570,7 @@ DiffPlexのAPIはInfrastructure Adapterへ閉じ込め、Application側はDiffPl
 
 ---
 
-### Step 27：MVP統合・受入確認
+### Step 28：MVP統合・受入確認
 
 最後は新機能を追加せず、最重要シナリオを通します。
 
@@ -553,6 +584,8 @@ Edit
 Search
  ↓
 Replace
+ ↓
+Text Info
  ↓
 Save
  ↓
