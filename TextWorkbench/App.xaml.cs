@@ -1,6 +1,6 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
+using TextWorkbench.Presentation.ViewModels;
+using TextWorkbench.Presentation.Views;
 
 namespace TextWorkbench
 {
@@ -9,6 +9,14 @@ namespace TextWorkbench
     /// </summary>
     public partial class App : Application
     {
+        private void OnStartup(object sender, StartupEventArgs e)
+        {
+            var viewModel = new MainWindowViewModel();
+            var mainWindow = new MainWindow
+            {
+                DataContext = viewModel
+            };
+            mainWindow.Show();
+        }
     }
-
 }
