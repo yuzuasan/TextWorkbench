@@ -4,9 +4,56 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TextWorkbench.Presentation.Views"
+        xmlns:viewModels="clr-namespace:TextWorkbench.Presentation.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="TextWorkbench" Height="600" Width="1000">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <!-- Menu -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="ファイル(_F)">
+                <MenuItem Header="新規(_N)"/>
+                <MenuItem Header="開く(_O)"/>
+                <MenuItem Header="保存(_S)"/>
+                <MenuItem Header="名前を付けて保存(_A)"/>
+                <Separator/>
+                <MenuItem Header="閉じる(_C)"/>
+                <Separator/>
+                <MenuItem Header="終了(_X)"/>
+            </MenuItem>
+            <MenuItem Header="検索(_S)">
+                <MenuItem Header="検索(_F)"/>
+                <MenuItem Header="置換(_R)"/>
+            </MenuItem>
+            <MenuItem Header="比較(_C)">
+                <MenuItem Header="ファイルを比較(_C)"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- TabControl -->
+        <TabControl Grid.Row="1"
+                    ItemsSource="{Binding Workspace.Tabs}"
+                    SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}">
+            <TabControl.Resources>
+                <DataTemplate DataType="{x:Type viewModels:DocumentTabViewModel}">
+                    <local:DocumentView/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type viewModels:DiffTabViewModel}">
+                    <local:DiffView/>
+                </DataTemplate>
+            </TabControl.Resources>
+        </TabControl>
+
+        <!-- StatusBar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="準備完了"/>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>
