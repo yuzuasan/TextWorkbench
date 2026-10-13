@@ -39,14 +39,25 @@
         <TabControl Grid.Row="1"
                     ItemsSource="{Binding Workspace.Tabs}"
                     SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}">
-            <TabControl.Resources>
-                <DataTemplate DataType="{x:Type viewModels:DocumentTabViewModel}">
-                    <local:DocumentView/>
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding DisplayTitle}"/>
                 </DataTemplate>
-                <DataTemplate DataType="{x:Type viewModels:DiffTabViewModel}">
-                    <local:DiffView/>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Resources>
+                            <DataTemplate DataType="{x:Type viewModels:DocumentTabViewModel}">
+                                <local:DocumentView/>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type viewModels:DiffTabViewModel}">
+                                <local:DiffView/>
+                            </DataTemplate>
+                        </ContentControl.Resources>
+                    </ContentControl>
                 </DataTemplate>
-            </TabControl.Resources>
+            </TabControl.ContentTemplate>
         </TabControl>
 
         <!-- StatusBar -->
