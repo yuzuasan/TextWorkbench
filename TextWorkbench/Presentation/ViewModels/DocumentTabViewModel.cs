@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using TextWorkbench.Domain.Models;
+using TextWorkbench.Presentation.Behaviors;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -8,34 +9,33 @@ namespace TextWorkbench.Presentation.ViewModels;
 /// </summary>
 public sealed partial class DocumentTabViewModel : TabViewModel
 {
+    private TextEditorDocumentBehavior? _documentBehavior;
+    private EditorStateBehavior? _editorStateBehavior;
+
     /// <summary>
     /// Documentを取得します。
     /// </summary>
     public Document Document { get; }
 
     /// <summary>
-    /// 保存後から編集が行われたかどうかを取得または設定します。
+    /// 保存後から編集が行われたかどうかを取得します。
     /// </summary>
-    [ObservableProperty]
-    private bool _isModified;
+    public bool IsModified => Document.IsModified;
 
     /// <summary>
-    /// ファイルが読み取り専用として扱われるかどうかを取得または設定します。
+    /// ファイルが読み取り専用として扱われるかどうかを取得します。
     /// </summary>
-    [ObservableProperty]
-    private bool _isReadOnly;
+    public bool IsReadOnly => Document.IsReadOnly;
 
     /// <summary>
-    /// Documentの読み込み処理中かどうかを取得または設定します。
+    /// Documentの読み込み処理中かどうかを取得します。
     /// </summary>
-    [ObservableProperty]
-    private bool _isLoading;
+    public bool IsLoading => Document.IsLoading;
 
     /// <summary>
-    /// Documentの保存処理中かどうかを取得または設定します。
+    /// Documentの保存処理中かどうかを取得します。
     /// </summary>
-    [ObservableProperty]
-    private bool _isSaving;
+    public bool IsSaving => Document.IsSaving;
 
     /// <summary>
     /// Documentが編集可能かどうかを取得します。
@@ -80,10 +80,49 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         : base(CalculateDisplayTitle(document))
     {
         Document = document ?? throw new ArgumentNullException(nameof(document));
-        _isModified = document.IsModified;
-        _isReadOnly = document.IsReadOnly;
-        _isLoading = document.IsLoading;
-        _isSaving = document.IsSaving;
+    }
+
+    /// <summary>
+    /// TextEditorDocumentBehaviorを設定します。
+    /// </summary>
+    public void SetDocumentBehavior(TextEditorDocumentBehavior behavior)
+    {
+        _documentBehavior = behavior;
+        _documentBehavior.Document = Document;
+    }
+
+    /// <summary>
+    /// EditorStateBehaviorを設定します。
+    /// </summary>
+    public void SetEditorStateBehavior(EditorStateBehavior behavior)
+    {
+        _editorStateBehavior = behavior;
+        _editorStateBehavior.Document = Document;
+    }
+
+    /// <summary>
+    /// Documentの状態変更時に呼び出します。
+    /// </summary>
+    public void OnDocumentStateChanged()
+    {
+        OnPropertyChanged(nameof(IsModified));
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(IsLoading));
+        OnPropertyChanged(nameof(IsSaving));
+        OnPropertyChanged(nameof(IsEditable));
+
+        _editorStateBehavior?.UpdateEditorReadOnly();
+    }
+
+    /// <summary>
+    /// Documentの内容変更時に呼び出します。
+    /// </summary>
+    public void OnDocumentContentChanged()
+    {
+        OnPropertyChanged(nameof(IsModified));
+        OnPropertyChanged(nameof(IsEditable));
+
+        _documentBehavior?.SyncFromDocument();
     }
 
     /// <summary>
