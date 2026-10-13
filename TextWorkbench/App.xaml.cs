@@ -1,6 +1,9 @@
-﻿using System.Text;
-using System.Windows;
+﻿using System.Windows;
 using TextWorkbench.Application.Interfaces;
+using TextWorkbench.Application.UseCases;
+using TextWorkbench.Infrastructure.Encoding;
+using TextWorkbench.Infrastructure.File;
+using TextWorkbench.Infrastructure.LineEnding;
 using TextWorkbench.Presentation.Services;
 using TextWorkbench.Presentation.ViewModels;
 using TextWorkbench.Presentation.Views;
@@ -15,13 +18,30 @@ namespace TextWorkbench
         private void OnStartup(object sender, StartupEventArgs e)
         {
             // Shift-JIS対応のためCodePagesEncodingProviderを登録
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            // サービスを作成
+            // Infrastructureサービスを作成
+            IFileService fileService = new FileService();
+            IEncodingService encodingService = new EncodingService();
+            ILineEndingService lineEndingService = new LineEndingService();
+
+            // Presentationサービスを作成
             IUserNotificationService notificationService = new MessageBoxNotificationService();
+            IFileDialogService fileDialogService = new FileDialogService();
+
+            // UseCaseを作成
+            var newDocumentUseCase = new NewDocumentUseCase();
+            var openDocumentUseCase = new OpenDocumentUseCase(
+                fileDialogService,
+                fileService,
+                encodingService,
+                lineEndingService);
 
             // ViewModelを作成
-            var viewModel = new MainWindowViewModel(notificationService);
+            var viewModel = new MainWindowViewModel(
+                notificationService,
+                newDocumentUseCase,
+                openDocumentUseCase);
 
             // MainWindowを作成
             var mainWindow = new MainWindow

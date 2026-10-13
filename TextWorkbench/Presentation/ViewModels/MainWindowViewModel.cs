@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TextWorkbench.Application.Interfaces;
+using TextWorkbench.Application.UseCases;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -10,6 +11,8 @@ namespace TextWorkbench.Presentation.ViewModels;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly IUserNotificationService _notificationService;
+    private readonly NewDocumentUseCase _newDocumentUseCase;
+    private readonly OpenDocumentUseCase _openDocumentUseCase;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -71,9 +74,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="notificationService">通知サービス</param>
-    public MainWindowViewModel(IUserNotificationService notificationService)
+    /// <param name="newDocumentUseCase">新規Document作成UseCase</param>
+    /// <param name="openDocumentUseCase">ファイルを開くUseCase</param>
+    public MainWindowViewModel(
+        IUserNotificationService notificationService,
+        NewDocumentUseCase newDocumentUseCase,
+        OpenDocumentUseCase openDocumentUseCase)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _newDocumentUseCase = newDocumentUseCase ?? throw new ArgumentNullException(nameof(newDocumentUseCase));
+        _openDocumentUseCase = openDocumentUseCase ?? throw new ArgumentNullException(nameof(openDocumentUseCase));
         Workspace = new Workspace();
 
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
@@ -90,13 +100,47 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanExecuteNew() => !IsProcessing;
     private void ExecuteNew()
     {
-        _notificationService.ShowInfo("新規作成（仮実装）");
+        try
+        {
+            var document = _newDocumentUseCase.Execute();
+            var tab = new DocumentTabViewModel(document);
+            Workspace.AddTab(tab);
+            RefreshCommandStates();
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"新規作成に失敗しました: {ex.Message}");
+        }
     }
 
     private bool CanExecuteOpen() => !IsProcessing;
     private void ExecuteOpen()
     {
-        _notificationService.ShowInfo("開く（仮実装）");
+        try
+        {
+            var document = _openDocumentUseCase.Execute();
+            if (document == null)
+            {
+                return;
+            }
+
+            // 同一ファイルの重複防止
+            var existingTab = Workspace.FindDocumentByFilePath(document.FilePath!);
+            if (existingTab != null)
+            {
+                Workspace.SetActiveTab(existingTab);
+                RefreshCommandStates();
+                return;
+            }
+
+            var tab = new DocumentTabViewModel(document);
+            Workspace.AddTab(tab);
+            RefreshCommandStates();
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"ファイルを開くことに失敗しました: {ex.Message}");
+        }
     }
 
     private bool CanExecuteSave() => !IsProcessing;
