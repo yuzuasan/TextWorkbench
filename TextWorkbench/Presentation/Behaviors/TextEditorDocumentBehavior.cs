@@ -11,6 +11,7 @@ public class TextEditorDocumentBehavior
     private TextEditor? _textEditor;
     private Document? _document;
     private bool _isSynchronizing;
+    private Action<bool>? _onDocumentContentChanged;
 
     /// <summary>
     /// TextEditorを取得または設定します。
@@ -49,6 +50,15 @@ public class TextEditorDocumentBehavior
         }
     }
 
+    /// <summary>
+    /// Documentの内容変更時に呼び出されるコールバックを設定します。
+    /// </summary>
+    /// <param name="callback">コールバック（syncFromDocument: DocumentからEditorへ同期するかどうか）</param>
+    public void SetOnDocumentContentChanged(Action<bool> callback)
+    {
+        _onDocumentContentChanged = callback;
+    }
+
     private void Attach()
     {
         if (_textEditor == null)
@@ -79,6 +89,8 @@ public class TextEditorDocumentBehavior
         // ユーザー編集：Editor → Document
         var content = _textEditor.Text;
         _document.UpdateContent(content);
+        // ViewModelへ通知してIsModifiedの変更通知を発火（DocumentからEditorへ同期しない）
+        _onDocumentContentChanged?.Invoke(false);
     }
 
     private void SyncDocumentToEditor()

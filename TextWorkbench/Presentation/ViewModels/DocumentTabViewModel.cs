@@ -89,6 +89,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     {
         _documentBehavior = behavior;
         _documentBehavior.Document = Document;
+        _documentBehavior.SetOnDocumentContentChanged(syncFromEditor => OnDocumentContentChanged(syncFromEditor));
     }
 
     /// <summary>
@@ -117,12 +118,16 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     /// <summary>
     /// Documentの内容変更時に呼び出します。
     /// </summary>
-    public void OnDocumentContentChanged()
+    /// <param name="syncFromDocument">DocumentからEditorへ同期するかどうか（プログラム変更時はtrue、ユーザー編集時はfalse）</param>
+    public void OnDocumentContentChanged(bool syncFromDocument = true)
     {
         OnPropertyChanged(nameof(IsModified));
         OnPropertyChanged(nameof(IsEditable));
 
-        _documentBehavior?.SyncFromDocument();
+        if (syncFromDocument)
+        {
+            _documentBehavior?.SyncFromDocument();
+        }
     }
 
     /// <summary>
