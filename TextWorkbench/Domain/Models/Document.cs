@@ -15,12 +15,12 @@ public sealed class Document
     /// <summary>
     /// 正規化済み絶対パスを取得します。新規未保存Documentでは null。
     /// </summary>
-    public string? FilePath { get; }
+    public string? FilePath { get; private set; }
 
     /// <summary>
     /// ファイル名を取得します。
     /// </summary>
-    public string? FileName { get; }
+    public string? FileName { get; private set; }
 
     /// <summary>
     /// 現在編集中のテキストを取得します。内部では改行コードをLFに統一します。
@@ -165,5 +165,18 @@ public sealed class Document
     public void SetReadOnly(bool isReadOnly)
     {
         IsReadOnly = isReadOnly;
+    }
+
+    /// <summary>
+    /// ファイルパスを更新します。Save As成功後に使用します。
+    /// </summary>
+    /// <param name="newFilePath">新しいファイルパス</param>
+    /// <param name="newFileName">新しいファイル名</param>
+    /// <param name="newReadOnly">新しい読み取り専用状態</param>
+    public void UpdateFilePath(string newFilePath, string newFileName, bool newReadOnly)
+    {
+        FilePath = newFilePath ?? throw new ArgumentNullException(nameof(newFilePath));
+        FileName = newFileName ?? throw new ArgumentNullException(nameof(newFileName));
+        IsReadOnly = newReadOnly;
     }
 }
