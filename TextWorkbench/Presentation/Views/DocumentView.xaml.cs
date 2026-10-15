@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.AvalonEdit;
+using TextWorkbench.Application.Interfaces;
+using TextWorkbench.Infrastructure.LineEnding;
 using TextWorkbench.Presentation.Behaviors;
 using TextWorkbench.Presentation.ViewModels;
 
@@ -13,10 +15,12 @@ public partial class DocumentView : UserControl
 {
     private TextEditorDocumentBehavior? _documentBehavior;
     private EditorStateBehavior? _editorStateBehavior;
+    private readonly ILineEndingService _lineEndingService;
 
     public DocumentView()
     {
         InitializeComponent();
+        _lineEndingService = new LineEndingService();
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
     }
@@ -45,7 +49,7 @@ public partial class DocumentView : UserControl
             return;
         }
 
-        _documentBehavior = new TextEditorDocumentBehavior();
+        _documentBehavior = new TextEditorDocumentBehavior(_lineEndingService);
         _documentBehavior.TextEditor = textEditor;
         viewModel.SetDocumentBehavior(_documentBehavior);
 

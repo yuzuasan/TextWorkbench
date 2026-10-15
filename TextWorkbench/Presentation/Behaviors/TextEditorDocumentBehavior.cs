@@ -1,4 +1,5 @@
 using ICSharpCode.AvalonEdit;
+using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
 
 namespace TextWorkbench.Presentation.Behaviors;
@@ -12,6 +13,16 @@ public class TextEditorDocumentBehavior
     private Document? _document;
     private bool _isSynchronizing;
     private Action<bool>? _onDocumentContentChanged;
+    private readonly ILineEndingService _lineEndingService;
+
+    /// <summary>
+    /// <see cref="TextEditorDocumentBehavior"/> の新しいインスタンスを初期化します。
+    /// </summary>
+    /// <param name="lineEndingService">改行コードサービス</param>
+    public TextEditorDocumentBehavior(ILineEndingService lineEndingService)
+    {
+        _lineEndingService = lineEndingService ?? throw new ArgumentNullException(nameof(lineEndingService));
+    }
 
     /// <summary>
     /// TextEditorを取得または設定します。
@@ -88,7 +99,9 @@ public class TextEditorDocumentBehavior
 
         // ユーザー編集：Editor → Document
         var content = _textEditor.Text;
-        _document.UpdateContent(content);
+        // 改行コードをLFに正規化
+        var normalizedContent = _lineEndingService.NormalizeToLf(content);
+        _document.UpdateContent(normalizedContent);
         // ViewModelへ通知してIsModifiedの変更通知を発火（DocumentからEditorへ同期しない）
         _onDocumentContentChanged?.Invoke(false);
     }

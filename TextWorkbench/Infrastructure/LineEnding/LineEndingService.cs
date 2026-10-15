@@ -28,7 +28,7 @@ public sealed class LineEndingService : ILineEndingService
         var firstCr = crIndex >= 0 ? crIndex : int.MaxValue;
 
         // CRはCRLFの一部として扱われるため、CRLFがあれば優先
-        if (firstCrLf < firstLf && firstCrLf < firstCr)
+        if (firstCrLf <= firstLf && firstCrLf <= firstCr)
         {
             return Domain.Enums.LineEnding.CrLf;
         }
