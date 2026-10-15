@@ -31,6 +31,18 @@ public partial class DocumentView : UserControl
         {
             InitializeBehaviors(viewModel);
         }
+        else
+        {
+            // DataContextがDocumentTabViewModelでなくなった場合、Behaviorをクリア
+            if (_documentBehavior != null)
+            {
+                _documentBehavior.Document = null;
+            }
+            if (_editorStateBehavior != null)
+            {
+                _editorStateBehavior.Document = null;
+            }
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -49,12 +61,29 @@ public partial class DocumentView : UserControl
             return;
         }
 
-        _documentBehavior = new TextEditorDocumentBehavior(_lineEndingService);
-        _documentBehavior.TextEditor = textEditor;
-        viewModel.SetDocumentBehavior(_documentBehavior);
+        // Behaviorが未作成の場合は作成
+        if (_documentBehavior == null)
+        {
+            _documentBehavior = new TextEditorDocumentBehavior(_lineEndingService);
+            _documentBehavior.TextEditor = textEditor;
+            viewModel.SetDocumentBehavior(_documentBehavior);
+        }
+        else
+        {
+            // 既存の場合はDocumentのみ更新
+            _documentBehavior.Document = viewModel.Document;
+        }
 
-        _editorStateBehavior = new EditorStateBehavior();
-        _editorStateBehavior.TextEditor = textEditor;
-        viewModel.SetEditorStateBehavior(_editorStateBehavior);
+        if (_editorStateBehavior == null)
+        {
+            _editorStateBehavior = new EditorStateBehavior();
+            _editorStateBehavior.TextEditor = textEditor;
+            viewModel.SetEditorStateBehavior(_editorStateBehavior);
+        }
+        else
+        {
+            // 既存の場合はDocumentのみ更新
+            _editorStateBehavior.Document = viewModel.Document;
+        }
     }
 }
