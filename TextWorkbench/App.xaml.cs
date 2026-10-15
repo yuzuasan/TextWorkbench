@@ -36,12 +36,17 @@ namespace TextWorkbench
                 fileService,
                 encodingService,
                 lineEndingService);
+            var saveDocumentUseCase = new SaveDocumentUseCase(
+                fileService,
+                encodingService,
+                lineEndingService);
 
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
                 notificationService,
                 newDocumentUseCase,
-                openDocumentUseCase);
+                openDocumentUseCase,
+                saveDocumentUseCase);
 
             // MainWindowを作成
             var mainWindow = new MainWindow

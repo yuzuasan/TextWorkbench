@@ -13,6 +13,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IUserNotificationService _notificationService;
     private readonly NewDocumentUseCase _newDocumentUseCase;
     private readonly OpenDocumentUseCase _openDocumentUseCase;
+    private readonly SaveDocumentUseCase _saveDocumentUseCase;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -76,14 +77,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="notificationService">通知サービス</param>
     /// <param name="newDocumentUseCase">新規Document作成UseCase</param>
     /// <param name="openDocumentUseCase">ファイルを開くUseCase</param>
+    /// <param name="saveDocumentUseCase">Document保存UseCase</param>
     public MainWindowViewModel(
         IUserNotificationService notificationService,
         NewDocumentUseCase newDocumentUseCase,
-        OpenDocumentUseCase openDocumentUseCase)
+        OpenDocumentUseCase openDocumentUseCase,
+        SaveDocumentUseCase saveDocumentUseCase)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _newDocumentUseCase = newDocumentUseCase ?? throw new ArgumentNullException(nameof(newDocumentUseCase));
         _openDocumentUseCase = openDocumentUseCase ?? throw new ArgumentNullException(nameof(openDocumentUseCase));
+        _saveDocumentUseCase = saveDocumentUseCase ?? throw new ArgumentNullException(nameof(saveDocumentUseCase));
         Workspace = new Workspace();
 
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
@@ -143,10 +147,48 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanExecuteSave() => !IsProcessing;
+    private bool CanExecuteSave()
+    {
+        if (IsProcessing)
+        {
+            return false;
+        }
+
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            return false;
+        }
+
+        return !documentTab.Document.IsReadOnly
+            && !documentTab.Document.IsLoading
+            && !documentTab.Document.IsSaving;
+    }
+
     private void ExecuteSave()
     {
-        _notificationService.ShowInfo("保存（仮実装）");
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            return;
+        }
+
+        var document = documentTab.Document;
+
+        // 新規Document（FilePath == null）の場合はSave Asに委譲
+        if (document.FilePath == null)
+        {
+            _notificationService.ShowInfo("名前を付けて保存を使用してください");
+            return;
+        }
+
+        try
+        {
+            _saveDocumentUseCase.Execute(document);
+            documentTab.OnDocumentSaved();
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"保存に失敗しました: {ex.Message}");
+        }
     }
 
     private bool CanExecuteSaveAs() => !IsProcessing;
