@@ -131,6 +131,32 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     }
 
     /// <summary>
+    /// Documentの保存成功時に呼び出します。
+    /// </summary>
+    public void OnDocumentSaved()
+    {
+        OnPropertyChanged(nameof(IsModified));
+        OnPropertyChanged(nameof(IsSaving));
+        OnPropertyChanged(nameof(IsEditable));
+
+        _editorStateBehavior?.UpdateEditorReadOnly();
+    }
+
+    /// <summary>
+    /// Documentの名前を付けて保存成功時に呼び出します。
+    /// </summary>
+    public void OnDocumentSavedAs()
+    {
+        OnPropertyChanged(nameof(IsModified));
+        OnPropertyChanged(nameof(IsSaving));
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(IsEditable));
+        OnPropertyChanged(nameof(DisplayTitle));
+
+        _editorStateBehavior?.UpdateEditorReadOnly();
+    }
+
+    /// <summary>
     /// DisplayTitleを算出します。
     /// </summary>
     private static string CalculateDisplayTitle(Document document)
