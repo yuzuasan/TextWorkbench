@@ -1,5 +1,6 @@
 using System.Windows;
 using TextWorkbench.Application.Interfaces;
+using TextWorkbench.Presentation.Constants;
 
 namespace TextWorkbench.Presentation.Services;
 
@@ -8,15 +9,13 @@ namespace TextWorkbench.Presentation.Services;
 /// </summary>
 public sealed class MessageBoxNotificationService : IUserNotificationService
 {
-    private const string AppName = "TextWorkbench";
-
     /// <summary>
     /// 情報メッセージを表示します。
     /// </summary>
     /// <param name="message">メッセージ</param>
     public void ShowInfo(string message)
     {
-        MessageBox.Show(message, AppName, MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(message, ApplicationInfo.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     /// <summary>
@@ -25,7 +24,7 @@ public sealed class MessageBoxNotificationService : IUserNotificationService
     /// <param name="message">メッセージ</param>
     public void ShowError(string message)
     {
-        MessageBox.Show(message, AppName, MessageBoxButton.OK, MessageBoxImage.Error);
+        MessageBox.Show(message, ApplicationInfo.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     /// <summary>
@@ -34,6 +33,6 @@ public sealed class MessageBoxNotificationService : IUserNotificationService
     /// <param name="message">メッセージ</param>
     public void ShowWarning(string message)
     {
-        MessageBox.Show(message, AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        MessageBox.Show(message, ApplicationInfo.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }
