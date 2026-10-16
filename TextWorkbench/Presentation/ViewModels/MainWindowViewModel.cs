@@ -14,6 +14,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly NewDocumentUseCase _newDocumentUseCase;
     private readonly OpenDocumentUseCase _openDocumentUseCase;
     private readonly SaveDocumentUseCase _saveDocumentUseCase;
+    private readonly SaveDocumentAsUseCase _saveDocumentAsUseCase;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -78,16 +79,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="newDocumentUseCase">新規Document作成UseCase</param>
     /// <param name="openDocumentUseCase">ファイルを開くUseCase</param>
     /// <param name="saveDocumentUseCase">Document保存UseCase</param>
+    /// <param name="saveDocumentAsUseCase">名前を付けて保存UseCase</param>
     public MainWindowViewModel(
         IUserNotificationService notificationService,
         NewDocumentUseCase newDocumentUseCase,
         OpenDocumentUseCase openDocumentUseCase,
-        SaveDocumentUseCase saveDocumentUseCase)
+        SaveDocumentUseCase saveDocumentUseCase,
+        SaveDocumentAsUseCase saveDocumentAsUseCase)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _newDocumentUseCase = newDocumentUseCase ?? throw new ArgumentNullException(nameof(newDocumentUseCase));
         _openDocumentUseCase = openDocumentUseCase ?? throw new ArgumentNullException(nameof(openDocumentUseCase));
         _saveDocumentUseCase = saveDocumentUseCase ?? throw new ArgumentNullException(nameof(saveDocumentUseCase));
+        _saveDocumentAsUseCase = saveDocumentAsUseCase ?? throw new ArgumentNullException(nameof(saveDocumentAsUseCase));
         Workspace = new Workspace();
 
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
@@ -176,7 +180,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // 新規Document（FilePath == null）の場合はSave Asに委譲
         if (document.FilePath == null)
         {
-            _notificationService.ShowInfo("名前を付けて保存を使用してください");
+            ExecuteSaveAs();
             return;
         }
 
@@ -191,10 +195,49 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanExecuteSaveAs() => !IsProcessing;
+    private bool CanExecuteSaveAs()
+    {
+        if (IsProcessing)
+        {
+            return false;
+        }
+
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            return false;
+        }
+
+        return !documentTab.Document.IsLoading
+            && !documentTab.Document.IsSaving;
+    }
+
     private void ExecuteSaveAs()
     {
-        _notificationService.ShowInfo("名前を付けて保存（仮実装）");
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            return;
+        }
+
+        try
+        {
+            var succeeded = _saveDocumentAsUseCase.Execute(
+                documentTab.Document,
+                Workspace);
+
+            if (succeeded)
+            {
+                documentTab.OnDocumentSavedAs();
+            }
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError(
+                $"名前を付けて保存に失敗しました: {ex.Message}");
+        }
+        finally
+        {
+            RefreshCommandStates();
+        }
     }
 
     private bool CanExecuteClose() => !IsProcessing;
@@ -243,4 +286,3 @@ public sealed partial class MainWindowViewModel : ObservableObject
         CompareCommand.NotifyCanExecuteChanged();
     }
 }
-

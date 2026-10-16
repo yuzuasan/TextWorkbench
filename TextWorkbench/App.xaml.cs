@@ -40,13 +40,19 @@ namespace TextWorkbench
                 fileService,
                 encodingService,
                 lineEndingService);
+            var saveDocumentAsUseCase = new SaveDocumentAsUseCase(
+                fileDialogService,
+                fileService,
+                encodingService,
+                lineEndingService);
 
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
                 notificationService,
                 newDocumentUseCase,
                 openDocumentUseCase,
-                saveDocumentUseCase);
+                saveDocumentUseCase,
+                saveDocumentAsUseCase);
 
             // MainWindowを作成
             var mainWindow = new MainWindow
