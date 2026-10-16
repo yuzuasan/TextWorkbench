@@ -153,12 +153,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanExecuteSave()
     {
-        if (IsProcessing)
-        {
-            return false;
-        }
-
-        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        if (IsProcessing || Workspace.ActiveTab is not DocumentTabViewModel documentTab)
         {
             return false;
         }
@@ -193,16 +188,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _notificationService.ShowError($"保存に失敗しました: {ex.Message}");
         }
+        finally
+        {
+            RefreshCommandStates();
+        }
     }
 
     private bool CanExecuteSaveAs()
     {
-        if (IsProcessing)
-        {
-            return false;
-        }
-
-        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        if (IsProcessing || Workspace.ActiveTab is not DocumentTabViewModel documentTab)
         {
             return false;
         }
@@ -241,34 +235,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanExecuteClose() => !IsProcessing;
-    private void ExecuteClose()
-    {
-        _notificationService.ShowInfo("閉じる（仮実装）");
-    }
+    private void ExecuteClose() => _notificationService.ShowInfo("閉じる（仮実装）");
 
     private bool CanExecuteExit() => !IsProcessing;
-    private void ExecuteExit()
-    {
-        _notificationService.ShowInfo("終了（仮実装）");
-    }
+    private void ExecuteExit() => _notificationService.ShowInfo("終了（仮実装）");
 
     private bool CanExecuteSearch() => !IsProcessing;
-    private void ExecuteSearch()
-    {
-        _notificationService.ShowInfo("検索（仮実装）");
-    }
+    private void ExecuteSearch() => _notificationService.ShowInfo("検索（仮実装）");
 
     private bool CanExecuteReplace() => !IsProcessing;
-    private void ExecuteReplace()
-    {
-        _notificationService.ShowInfo("置換（仮実装）");
-    }
+    private void ExecuteReplace() => _notificationService.ShowInfo("置換（仮実装）");
 
     private bool CanExecuteCompare() => !IsProcessing;
-    private void ExecuteCompare()
-    {
-        _notificationService.ShowInfo("比較（仮実装）");
-    }
+    private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
 
     /// <summary>
     /// 全てのコマンドのCanExecute状態を更新します。
