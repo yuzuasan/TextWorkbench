@@ -27,6 +27,7 @@ namespace TextWorkbench
 
             // Presentationサービスを作成
             IUserNotificationService notificationService = new MessageBoxNotificationService();
+            IUserConfirmationService confirmationService = new MessageBoxConfirmationService();
             IFileDialogService fileDialogService = new FileDialogService();
 
             // UseCaseを作成
@@ -45,6 +46,10 @@ namespace TextWorkbench
                 fileService,
                 encodingService,
                 lineEndingService);
+            var closeDocumentUseCase = new CloseDocumentUseCase(
+                confirmationService,
+                saveDocumentUseCase,
+                saveDocumentAsUseCase);
 
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
@@ -52,7 +57,8 @@ namespace TextWorkbench
                 newDocumentUseCase,
                 openDocumentUseCase,
                 saveDocumentUseCase,
-                saveDocumentAsUseCase);
+                saveDocumentAsUseCase,
+                closeDocumentUseCase);
 
             // MainWindowを作成
             var mainWindow = new MainWindow
