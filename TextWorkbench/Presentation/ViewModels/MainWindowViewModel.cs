@@ -16,6 +16,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly SaveDocumentUseCase _saveDocumentUseCase;
     private readonly SaveDocumentAsUseCase _saveDocumentAsUseCase;
     private readonly CloseDocumentUseCase _closeDocumentUseCase;
+    private readonly ExitApplicationUseCase _exitApplicationUseCase;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -82,13 +83,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="saveDocumentUseCase">Document保存UseCase</param>
     /// <param name="saveDocumentAsUseCase">名前を付けて保存UseCase</param>
     /// <param name="closeDocumentUseCase">Documentを閉じるUseCase</param>
+    /// <param name="exitApplicationUseCase">アプリケーション終了UseCase</param>
     public MainWindowViewModel(
         IUserNotificationService notificationService,
         NewDocumentUseCase newDocumentUseCase,
         OpenDocumentUseCase openDocumentUseCase,
         SaveDocumentUseCase saveDocumentUseCase,
         SaveDocumentAsUseCase saveDocumentAsUseCase,
-        CloseDocumentUseCase closeDocumentUseCase)
+        CloseDocumentUseCase closeDocumentUseCase,
+        ExitApplicationUseCase exitApplicationUseCase)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _newDocumentUseCase = newDocumentUseCase ?? throw new ArgumentNullException(nameof(newDocumentUseCase));
@@ -96,6 +99,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _saveDocumentUseCase = saveDocumentUseCase ?? throw new ArgumentNullException(nameof(saveDocumentUseCase));
         _saveDocumentAsUseCase = saveDocumentAsUseCase ?? throw new ArgumentNullException(nameof(saveDocumentAsUseCase));
         _closeDocumentUseCase = closeDocumentUseCase ?? throw new ArgumentNullException(nameof(closeDocumentUseCase));
+        _exitApplicationUseCase = exitApplicationUseCase ?? throw new ArgumentNullException(nameof(exitApplicationUseCase));
 
         Workspace = new Workspace();
 
@@ -288,7 +292,39 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanExecuteExit() => !IsProcessing;
-    private void ExecuteExit() => _notificationService.ShowInfo("終了（仮実装）");
+
+    private void ExecuteExit()
+    {
+        CanExit();
+    }
+
+    /// <summary>
+    /// アプリケーションの終了確認と必要な保存を実行し、
+    /// ウィンドウを閉じてよいかを返します。
+    /// 実際のウィンドウ終了処理はPresentation側で行います。
+    /// </summary>
+    /// <returns>
+    /// 終了してよい場合はtrue、終了を中止する場合はfalse。
+    /// </returns>
+    public bool CanExit()
+    {
+        if (IsProcessing)
+        {
+            return false;
+        }
+
+        try
+        {
+            return _exitApplicationUseCase.Execute(Workspace);
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError(
+                $"アプリケーションの終了処理に失敗しました: {ex.Message}");
+
+            return false;
+        }
+    }
 
     private bool CanExecuteSearch() => !IsProcessing;
     private void ExecuteSearch() => _notificationService.ShowInfo("検索（仮実装）");
