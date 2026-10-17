@@ -24,6 +24,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public Workspace Workspace { get; }
 
     /// <summary>
+    /// ウィンドウの終了要求を通知します。
+    /// </summary>
+    public event EventHandler? ExitRequested;
+
+    /// <summary>
     /// 処理中かどうかを取得または設定します。
     /// </summary>
     [ObservableProperty]
@@ -293,9 +298,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanExecuteExit() => !IsProcessing;
 
+    /// <summary>
+    /// Viewへウィンドウの終了を要求します。
+    /// 終了確認と終了可否の判定はClosingイベントで行います。
+    /// </summary>
     private void ExecuteExit()
     {
-        CanExit();
+        ExitRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
