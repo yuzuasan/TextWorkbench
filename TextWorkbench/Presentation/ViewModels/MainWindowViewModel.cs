@@ -117,6 +117,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SearchCommand = new RelayCommand(ExecuteSearch, CanExecuteSearch);
         ReplaceCommand = new RelayCommand(ExecuteReplace, CanExecuteReplace);
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
+
+        // 起動直後から編集できるよう、初期Documentを作成してWorkspaceへ追加する。
+        var initialDocument = _newDocumentUseCase.Execute();
+        var initialTab = new DocumentTabViewModel(initialDocument);
+        Workspace.AddTab(initialTab);
+
+        // 初期タブに対応するコマンドの実行可否を更新する。
+        RefreshCommandStates();
     }
 
     private bool CanExecuteNew() => !IsProcessing;
