@@ -43,7 +43,10 @@
                     SelectionChanged="MainTabControl_SelectionChanged">
             <TabControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding DisplayTitle}"/>
+                    <TextBlock Text="{Binding DisplayTitle}"
+                               MaxWidth="220"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding DisplayTitle}"/>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
