@@ -8,6 +8,8 @@ namespace TextWorkbench.Presentation.ViewModels;
 /// </summary>
 public sealed partial class Workspace : ObservableObject
 {
+    private int _untitledDocumentCount;
+
     /// <summary>
     /// Tab一覧を取得します。
     /// </summary>
@@ -35,6 +37,13 @@ public sealed partial class Workspace : ObservableObject
     {
         if (tab == null)
             throw new ArgumentNullException(nameof(tab));
+
+        if (tab is DocumentTabViewModel documentTab &&
+            string.IsNullOrEmpty(documentTab.Document.FilePath))
+        {
+            _untitledDocumentCount++;
+            documentTab.DisplayTitle = $"無題{_untitledDocumentCount}";
+        }
 
         Tabs.Add(tab);
         ActiveTab = tab;
