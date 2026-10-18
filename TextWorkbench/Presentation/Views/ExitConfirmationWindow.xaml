@@ -29,12 +29,18 @@
             <TextBlock Margin="0,0,0,6"
                        Text="未保存の変更があるファイル："
                        FontWeight="SemiBold"/>
-            <ListBox x:Name="DocumentList"
-                     MinHeight="70"
-                     MaxHeight="220"
-                     IsHitTestVisible="False"
-                     Focusable="False"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            <ItemsControl x:Name="DocumentList"
+                          MinHeight="70"
+                          MaxHeight="220">
+                <ItemsControl.Template>
+                    <ControlTemplate>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
+                            <ItemsPresenter/>
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ItemsControl.Template>
+            </ItemsControl>
         </StackPanel>
 
         <UniformGrid Grid.Row="2" Columns="3">
