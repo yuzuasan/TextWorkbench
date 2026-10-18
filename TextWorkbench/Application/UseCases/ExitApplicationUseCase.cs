@@ -97,6 +97,9 @@ public sealed class ExitApplicationUseCase
             {
                 if (document.FilePath is null)
                 {
+                    // Save As前にタブを切り替えて、ユーザーがどのDocumentか認識できるようにする
+                    workspace.SetActiveTab(tab);
+
                     // Save Asのキャンセルはfalseとして返り、通知せず終了を中止する。
                     if (!_saveDocumentAsUseCase.Execute(document, workspace))
                     {
