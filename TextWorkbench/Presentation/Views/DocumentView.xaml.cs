@@ -99,24 +99,19 @@ public partial class DocumentView : UserControl
         {
             _documentBehavior = new TextEditorDocumentBehavior(_lineEndingService);
             _documentBehavior.TextEditor = textEditor;
-            viewModel.SetDocumentBehavior(_documentBehavior);
         }
-        else
-        {
-            // 既存の場合はDocumentのみ更新
-            _documentBehavior.Document = viewModel.Document;
-        }
+
+        // DocumentViewが別のDocumentTabViewModelで再利用された場合も、
+        // 現在のViewModelへ変更通知コールバックを再接続する。
+        viewModel.SetDocumentBehavior(_documentBehavior);
 
         if (_editorStateBehavior == null)
         {
             _editorStateBehavior = new EditorStateBehavior();
             _editorStateBehavior.TextEditor = textEditor;
-            viewModel.SetEditorStateBehavior(_editorStateBehavior);
         }
-        else
-        {
-            // 既存の場合はDocumentのみ更新
-            _editorStateBehavior.Document = viewModel.Document;
-        }
+
+        // 現在のViewModelとEditorStateBehaviorの関連付けも更新する。
+        viewModel.SetEditorStateBehavior(_editorStateBehavior);
     }
 }

@@ -43,10 +43,41 @@
                     SelectionChanged="MainTabControl_SelectionChanged">
             <TabControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding DisplayTitle}"
-                               MaxWidth="220"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding DisplayTitle}"/>
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Resources>
+                            <DataTemplate DataType="{x:Type viewModels:DocumentTabViewModel}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="●"
+                                               Foreground="#D97706"
+                                               FontSize="10"
+                                               Margin="0,0,5,0"
+                                               VerticalAlignment="Center"
+                                               ToolTip="未保存の変更があります">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsModified}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding DisplayTitle}"
+                                               MaxWidth="220"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding DisplayTitle}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type viewModels:DiffTabViewModel}">
+                                <TextBlock Text="{Binding DisplayTitle}"
+                                           MaxWidth="220"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding DisplayTitle}"/>
+                            </DataTemplate>
+                        </ContentControl.Resources>
+                    </ContentControl>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
