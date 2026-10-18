@@ -36,9 +36,11 @@
         </Menu>
 
         <!-- TabControl -->
-        <TabControl Grid.Row="1"
+        <TabControl x:Name="MainTabControl"
+                    Grid.Row="1"
                     ItemsSource="{Binding Workspace.Tabs}"
-                    SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}">
+                    SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}"
+                    SelectionChanged="MainTabControl_SelectionChanged">
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding DisplayTitle}"/>

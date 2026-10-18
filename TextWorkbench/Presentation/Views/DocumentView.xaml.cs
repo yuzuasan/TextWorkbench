@@ -1,6 +1,8 @@
+using ICSharpCode.AvalonEdit;
 using System.Windows;
 using System.Windows.Controls;
-using ICSharpCode.AvalonEdit;
+using System.Windows.Input;
+using System.Windows.Threading;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Infrastructure.LineEnding;
 using TextWorkbench.Presentation.Behaviors;
@@ -38,6 +40,7 @@ public partial class DocumentView : UserControl
             {
                 _documentBehavior.Document = null;
             }
+
             if (_editorStateBehavior != null)
             {
                 _editorStateBehavior.Document = null;
@@ -51,6 +54,36 @@ public partial class DocumentView : UserControl
         {
             InitializeBehaviors(viewModel);
         }
+    }
+
+    /// <summary>
+    /// エディタにフォーカスを設定します。
+    /// </summary>
+    public void FocusEditor()
+    {
+        if (FindName("TextEditor") is not TextEditor textEditor)
+        {
+            return;
+        }
+
+        if (!IsLoaded || !IsVisible || !textEditor.IsVisible)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Input,
+            new Action(() =>
+            {
+                // Dispatcher実行時にも表示状態を確認します。
+                if (!IsLoaded || !IsVisible || !textEditor.IsVisible)
+                {
+                    return;
+                }
+
+                textEditor.Focus();
+                Keyboard.Focus(textEditor);
+            }));
     }
 
     private void InitializeBehaviors(DocumentTabViewModel viewModel)

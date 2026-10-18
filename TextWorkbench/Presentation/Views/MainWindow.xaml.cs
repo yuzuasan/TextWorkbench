@@ -1,4 +1,7 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
 using TextWorkbench.Presentation.ViewModels;
 
 namespace TextWorkbench.Presentation.Views
@@ -32,6 +35,72 @@ namespace TextWorkbench.Presentation.Views
             {
                 newViewModel.ExitRequested += MainWindow_ExitRequested;
             }
+        }
+
+        /// <summary>
+        /// タブ選択変更後、選択中のドキュメントエディタにフォーカスを設定します。
+        /// </summary>
+        private void MainTabControl_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            // 子要素からバブルアップしたSelectionChangedは対象外にします。
+            if (!ReferenceEquals(e.OriginalSource, MainTabControl))
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(
+                DispatcherPriority.Loaded,
+                new Action(FocusActiveDocumentEditor));
+        }
+
+        /// <summary>
+        /// 選択中のタブに対応するDocumentViewへフォーカス設定を依頼します。
+        /// </summary>
+        private void FocusActiveDocumentEditor()
+        {
+            if (!IsLoaded || !IsActive)
+            {
+                return;
+            }
+
+            if (MainTabControl.SelectedItem is not DocumentTabViewModel)
+            {
+                return;
+            }
+
+            var documentView = FindVisualChild<DocumentView>(MainTabControl);
+
+            documentView?.FocusEditor();
+        }
+
+        /// <summary>
+        /// 指定された型のビジュアル子要素を検索します。
+        /// </summary>
+        private static T? FindVisualChild<T>(DependencyObject parent)
+            where T : DependencyObject
+        {
+            var childCount = VisualTreeHelper.GetChildrenCount(parent);
+
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is T target)
+                {
+                    return target;
+                }
+
+                var descendant = FindVisualChild<T>(child);
+
+                if (descendant != null)
+                {
+                    return descendant;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
