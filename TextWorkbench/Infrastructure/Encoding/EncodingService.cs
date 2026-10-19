@@ -86,7 +86,15 @@ public sealed class EncodingService : IEncodingService
             throw new ArgumentNullException(nameof(text));
 
         var systemEncoding = GetSystemEncoding(encoding);
-        return systemEncoding.GetBytes(text);
+        var bytes = systemEncoding.GetBytes(text);
+
+        if (encoding == TextEncoding.Utf8Bom)
+        {
+            var preamble = systemEncoding.GetPreamble();
+            return preamble.Concat(bytes).ToArray();
+        }
+
+        return bytes;
     }
 
     /// <summary>
