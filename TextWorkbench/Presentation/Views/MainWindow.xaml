@@ -10,6 +10,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -35,9 +36,36 @@
             </MenuItem>
         </Menu>
 
+        <!-- QuickActions -->
+        <ToolBar Grid.Row="1" Padding="4">
+            <Button Command="{Binding NewCommand}" ToolTip="新規作成">
+                <TextBlock Text="新規"/>
+            </Button>
+            <Button Command="{Binding OpenCommand}" ToolTip="開く">
+                <TextBlock Text="開く"/>
+            </Button>
+            <Button Command="{Binding SaveCommand}" ToolTip="保存">
+                <TextBlock Text="保存"/>
+            </Button>
+            <Button Command="{Binding SaveAsCommand}" ToolTip="名前を付けて保存">
+                <TextBlock Text="名前を付けて保存"/>
+            </Button>
+            <Separator/>
+            <Button Command="{Binding SearchCommand}" ToolTip="検索">
+                <TextBlock Text="検索"/>
+            </Button>
+            <Button Command="{Binding ReplaceCommand}" ToolTip="置換">
+                <TextBlock Text="置換"/>
+            </Button>
+            <Separator/>
+            <Button Command="{Binding CompareCommand}" ToolTip="比較">
+                <TextBlock Text="比較"/>
+            </Button>
+        </ToolBar>
+
         <!-- TabControl -->
         <TabControl x:Name="MainTabControl"
-                    Grid.Row="1"
+                    Grid.Row="2"
                     ItemsSource="{Binding Workspace.Tabs}"
                     SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}"
                     SelectionChanged="MainTabControl_SelectionChanged">
@@ -97,7 +125,7 @@
         </TabControl>
 
         <!-- StatusBar -->
-        <StatusBar Grid.Row="2">
+        <StatusBar Grid.Row="3">
             <StatusBarItem>
                 <TextBlock Text="準備完了"/>
             </StatusBarItem>
