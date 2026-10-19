@@ -43,6 +43,18 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     public bool IsEditable => Document.IsEditable;
 
     /// <summary>
+    /// Caretの行番号を取得します。行番号は1始まりです。
+    /// </summary>
+    [ObservableProperty]
+    private int _caretLine = 1;
+
+    /// <summary>
+    /// Caretの列番号を取得します。列番号は1始まりです。
+    /// </summary>
+    [ObservableProperty]
+    private int _caretColumn = 1;
+
+    /// <summary>
     /// 検索テキストを取得または設定します。
     /// </summary>
     [ObservableProperty]
@@ -99,6 +111,17 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     {
         _editorStateBehavior = behavior;
         _editorStateBehavior.Document = Document;
+    }
+
+    /// <summary>
+    /// AvalonEditからCaret位置を受け取り、UI状態を更新します。
+    /// </summary>
+    /// <param name="line">1始まりの行番号</param>
+    /// <param name="column">1始まりの列番号</param>
+    public void UpdateCaretPosition(int line, int column)
+    {
+        CaretLine = line;
+        CaretColumn = column;
     }
 
     /// <summary>

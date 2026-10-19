@@ -19,6 +19,9 @@ public partial class DocumentView : UserControl
     private EditorStateBehavior? _editorStateBehavior;
     private readonly ILineEndingService _lineEndingService;
 
+    private TextEditor? _textEditor;
+    private bool _isCaretPositionHandlerAttached;
+
     public DocumentView()
     {
         InitializeComponent();
@@ -94,6 +97,15 @@ public partial class DocumentView : UserControl
             return;
         }
 
+        _textEditor = textEditor;
+
+        // Caretイベントは同じTextEditorに対して一度だけ購読する。
+        if (!_isCaretPositionHandlerAttached)
+        {
+            textEditor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+            _isCaretPositionHandlerAttached = true;
+        }
+
         // Behaviorが未作成の場合は作成
         if (_documentBehavior == null)
         {
@@ -113,5 +125,26 @@ public partial class DocumentView : UserControl
 
         // 現在のViewModelとEditorStateBehaviorの関連付けも更新する。
         viewModel.SetEditorStateBehavior(_editorStateBehavior);
+
+        // タブ切替時にも、現在のEditor位置を新しいViewModelへ渡す。
+        UpdateCaretPosition(viewModel, textEditor);
+    }
+
+    private void OnCaretPositionChanged(object? sender, EventArgs e)
+    {
+        if (_textEditor == null || DataContext is not DocumentTabViewModel viewModel)
+        {
+            return;
+        }
+
+        UpdateCaretPosition(viewModel, _textEditor);
+    }
+
+    private static void UpdateCaretPosition(
+        DocumentTabViewModel viewModel,
+        TextEditor textEditor)
+    {
+        var position = textEditor.TextArea.Caret.Position;
+        viewModel.UpdateCaretPosition(position.Line, position.Column);
     }
 }
