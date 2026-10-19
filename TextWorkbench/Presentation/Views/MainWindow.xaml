@@ -84,7 +84,7 @@
                     <ContentControl Content="{Binding}">
                         <ContentControl.Resources>
                             <DataTemplate DataType="{x:Type viewModels:DocumentTabViewModel}">
-                                <StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding ToolTipText}">
                                     <TextBlock Text="●"
                                                Foreground="#D97706"
                                                FontSize="10"
@@ -104,8 +104,7 @@
                                     </TextBlock>
                                     <TextBlock Text="{Binding DisplayTitle}"
                                                MaxWidth="220"
-                                               TextTrimming="CharacterEllipsis"
-                                               ToolTip="{Binding DisplayTitle}"/>
+                                               TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
                             </DataTemplate>
                             <DataTemplate DataType="{x:Type viewModels:DiffTabViewModel}">

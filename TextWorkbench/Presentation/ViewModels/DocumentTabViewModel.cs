@@ -18,6 +18,11 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     public Document Document { get; }
 
     /// <summary>
+    /// ツールチップ用のテキストを取得します。
+    /// </summary>
+    public string ToolTipText => Document.FilePath ?? DisplayTitle;
+
+    /// <summary>
     /// 保存後から編集が行われたかどうかを取得します。
     /// </summary>
     public bool IsModified => Document.IsModified;
