@@ -127,7 +127,27 @@
         <!-- StatusBar -->
         <StatusBar Grid.Row="3">
             <StatusBarItem>
-                <TextBlock Text="準備完了"/>
+                <TextBlock Text="{Binding StatusEncoding}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusLineEnding}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusCaretPosition}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusModificationState}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusReadOnlyState}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusProcessingState}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
