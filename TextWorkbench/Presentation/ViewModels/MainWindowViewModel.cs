@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TextWorkbench.Application.Interfaces;
@@ -18,6 +19,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly SaveDocumentAsUseCase _saveDocumentAsUseCase;
     private readonly CloseDocumentUseCase _closeDocumentUseCase;
     private readonly ExitApplicationUseCase _exitApplicationUseCase;
+
+    /// <summary>
+    /// StatusBar更新の監視対象となるDocumentTabを取得または設定します。
+    /// </summary>
+    private DocumentTabViewModel? _observedStatusTab;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -159,6 +165,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var initialDocument = _newDocumentUseCase.Execute();
         var initialTab = new DocumentTabViewModel(initialDocument);
         Workspace.AddTab(initialTab);
+
+        // ActiveTabの切り替えと、アクティブなDocumentTabの状態変更を監視する。
+        Workspace.PropertyChanged += OnWorkspacePropertyChanged;
+        ObserveActiveTabForStatusBar();
+        UpdateStatusBarInfo();
 
         // 初期タブに対応するコマンドの実行可否を更新する。
         RefreshCommandStates();
@@ -465,6 +476,56 @@ public sealed partial class MainWindowViewModel : ObservableObject
         else
         {
             StatusProcessingState = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Workspaceのプロパティ変更を処理します。
+    /// </summary>
+    private void OnWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(Workspace.ActiveTab))
+        {
+            return;
+        }
+
+        ObserveActiveTabForStatusBar();
+        UpdateStatusBarInfo();
+        RefreshCommandStates();
+    }
+
+    /// <summary>
+    /// 現在のアクティブタブをStatusBar更新の監視対象にします。
+    /// 以前の監視対象がある場合はイベント購読を解除します。
+    /// </summary>
+    private void ObserveActiveTabForStatusBar()
+    {
+        if (_observedStatusTab != null)
+        {
+            _observedStatusTab.PropertyChanged -= OnActiveTabPropertyChanged;
+        }
+
+        _observedStatusTab = Workspace.ActiveTab as DocumentTabViewModel;
+
+        if (_observedStatusTab != null)
+        {
+            _observedStatusTab.PropertyChanged += OnActiveTabPropertyChanged;
+        }
+    }
+
+    /// <summary>
+    /// アクティブなDocumentTabの状態変更を処理します。
+    /// </summary>
+    private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DocumentTabViewModel.IsModified)
+            or nameof(DocumentTabViewModel.IsReadOnly)
+            or nameof(DocumentTabViewModel.IsLoading)
+            or nameof(DocumentTabViewModel.IsSaving)
+            or nameof(DocumentTabViewModel.IsEditable))
+        {
+            UpdateStatusBarInfo();
+            RefreshCommandStates();
         }
     }
 
