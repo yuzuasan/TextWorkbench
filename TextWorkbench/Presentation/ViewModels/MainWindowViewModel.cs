@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
+using TextWorkbench.Domain.Enums;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -33,6 +34,42 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private bool _isProcessing;
+
+    /// <summary>
+    /// StatusBarのEncoding表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusEncoding = string.Empty;
+
+    /// <summary>
+    /// StatusBarのLineEnding表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusLineEnding = string.Empty;
+
+    /// <summary>
+    /// StatusBarのCaret位置表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusCaretPosition = string.Empty;
+
+    /// <summary>
+    /// StatusBarの変更状態表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusModificationState = string.Empty;
+
+    /// <summary>
+    /// StatusBarの読み取り専用状態表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusReadOnlyState = string.Empty;
+
+    /// <summary>
+    /// StatusBarの処理中状態表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _statusProcessingState = string.Empty;
 
     /// <summary>
     /// 新規作成コマンドを取得します。
@@ -351,6 +388,85 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanExecuteCompare() => !IsProcessing;
     private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
+
+    /// <summary>
+    /// StatusBar情報を更新します。
+    /// </summary>
+    private void UpdateStatusBarInfo()
+    {
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            // DocumentTabでない場合はクリア
+            StatusEncoding = string.Empty;
+            StatusLineEnding = string.Empty;
+            StatusCaretPosition = string.Empty;
+            StatusModificationState = string.Empty;
+            StatusReadOnlyState = string.Empty;
+            StatusProcessingState = string.Empty;
+            return;
+        }
+
+        var document = documentTab.Document;
+
+        // Encoding表示
+        StatusEncoding = document.Encoding switch
+        {
+            TextEncoding.Utf8 => "UTF-8",
+            TextEncoding.Utf8Bom => "UTF-8 BOM",
+            TextEncoding.ShiftJis => "Shift-JIS",
+            _ => "Unknown"
+        };
+
+        // LineEnding表示
+        StatusLineEnding = document.LineEnding switch
+        {
+            LineEnding.CrLf => "CRLF",
+            LineEnding.Lf => "LF",
+            LineEnding.Cr => "CR",
+            _ => "Unknown"
+        };
+
+        // Caret位置表示（暫定実装：空文字）
+        StatusCaretPosition = string.Empty;
+
+        // 変更状態表示
+        if (document.IsLoading || document.IsSaving)
+        {
+            StatusModificationState = string.Empty;
+        }
+        else if (document.IsModified)
+        {
+            StatusModificationState = "変更あり";
+        }
+        else
+        {
+            StatusModificationState = string.Empty;
+        }
+
+        // 読み取り専用表示
+        if (document.IsReadOnly)
+        {
+            StatusReadOnlyState = "読み取り専用";
+        }
+        else
+        {
+            StatusReadOnlyState = string.Empty;
+        }
+
+        // 処理中表示
+        if (document.IsLoading)
+        {
+            StatusProcessingState = "読み込み中...";
+        }
+        else if (document.IsSaving)
+        {
+            StatusProcessingState = "保存中...";
+        }
+        else
+        {
+            StatusProcessingState = string.Empty;
+        }
+    }
 
     /// <summary>
     /// 全てのコマンドのCanExecute状態を更新します。
