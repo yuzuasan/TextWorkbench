@@ -437,8 +437,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _ => "Unknown"
         };
 
-        // Caret位置表示（暫定実装：空文字）
-        StatusCaretPosition = string.Empty;
+        // アクティブなDocumentTabのCaret位置をStatusBarへ表示する。
+        StatusCaretPosition = $"行{documentTab.CaretLine}、列{documentTab.CaretColumn}";
 
         // 変更状態表示
         if (document.IsLoading || document.IsSaving)
@@ -518,6 +518,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // Caret位置が変わった場合もStatusBarを更新する。
+        if (e.PropertyName is nameof(DocumentTabViewModel.CaretLine)
+            or nameof(DocumentTabViewModel.CaretColumn))
+        {
+            UpdateStatusBarInfo();
+            return;
+        }
+
         if (e.PropertyName is nameof(DocumentTabViewModel.IsModified)
             or nameof(DocumentTabViewModel.IsReadOnly)
             or nameof(DocumentTabViewModel.IsLoading)
