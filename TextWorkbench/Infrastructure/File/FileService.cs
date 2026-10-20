@@ -1,4 +1,5 @@
 using System.IO;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
 
@@ -19,10 +20,25 @@ public sealed class FileService : IFileService
         if (string.IsNullOrEmpty(filePath))
             throw new ArgumentException("ファイルパスを指定してください。", nameof(filePath));
 
-        var content = System.IO.File.ReadAllBytes(filePath);
-        var isReadOnly = System.IO.File.GetAttributes(filePath).HasFlag(FileAttributes.ReadOnly);
+        try
+        {
+            var content = System.IO.File.ReadAllBytes(filePath);
+            var isReadOnly = System.IO.File.GetAttributes(filePath).HasFlag(FileAttributes.ReadOnly);
 
-        return new FileReadResult(content, isReadOnly);
+            return new FileReadResult(content, isReadOnly);
+        }
+        catch (FileNotFoundException)
+        {
+            throw new FileOperationException("ファイルを開けませんでした。");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new FileOperationException("ファイルへのアクセスが拒否されました。");
+        }
+        catch (IOException)
+        {
+            throw new FileOperationException("ファイル操作に失敗しました。");
+        }
     }
 
     /// <summary>
@@ -38,6 +54,17 @@ public sealed class FileService : IFileService
         if (bytes == null)
             throw new ArgumentNullException(nameof(bytes));
 
-        System.IO.File.WriteAllBytes(filePath, bytes);
+        try
+        {
+            System.IO.File.WriteAllBytes(filePath, bytes);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new FileOperationException("ファイルへのアクセスが拒否されました。");
+        }
+        catch (IOException)
+        {
+            throw new FileOperationException("ファイルを保存できませんでした。");
+        }
     }
 }
