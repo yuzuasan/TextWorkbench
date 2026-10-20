@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
 using TextWorkbench.Domain.Enums;
@@ -186,9 +187,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Workspace.AddTab(tab);
             RefreshCommandStates();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _notificationService.ShowError($"新規作成に失敗しました: {ex.Message}");
+            _notificationService.ShowError("新規作成に失敗しました。");
         }
     }
 
@@ -217,9 +218,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Workspace.AddTab(tab);
             RefreshCommandStates();
         }
-        catch (Exception ex)
+        catch (FileOperationException ex)
         {
-            _notificationService.ShowError($"ファイルを開くことに失敗しました: {ex.Message}");
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("ファイルを開くことに失敗しました。");
         }
     }
 
@@ -256,9 +265,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _saveDocumentUseCase.Execute(document);
             documentTab.OnDocumentSaved();
         }
-        catch (Exception ex)
+        catch (FileOperationException ex)
         {
-            _notificationService.ShowError($"保存に失敗しました: {ex.Message}");
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("保存に失敗しました。");
         }
         finally
         {
@@ -295,10 +312,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 documentTab.OnDocumentSavedAs();
             }
         }
-        catch (Exception ex)
+        catch (FileOperationException ex)
         {
-            _notificationService.ShowError(
-                $"名前を付けて保存に失敗しました: {ex.Message}");
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("名前を付けて保存に失敗しました。");
         }
         finally
         {
@@ -340,10 +364,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // タブの追加・削除はWorkspaceを通して行う。
             Workspace.RemoveTab(documentTab);
         }
-        catch (Exception ex)
+        catch (FileOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
         {
             // 保存失敗などの場合はタブを残してエラーを通知する。
-            _notificationService.ShowError($"閉じることに失敗しました: {ex.Message}");
+            _notificationService.ShowError("閉じることに失敗しました。");
         }
         finally
         {
@@ -382,11 +414,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             return _exitApplicationUseCase.Execute(Workspace);
         }
-        catch (Exception ex)
+        catch (FileOperationException ex)
         {
-            _notificationService.ShowError(
-                $"アプリケーションの終了処理に失敗しました: {ex.Message}");
-
+            _notificationService.ShowError(ex.Message);
+            return false;
+        }
+        catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+            return false;
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("アプリケーションの終了処理に失敗しました。");
             return false;
         }
     }
