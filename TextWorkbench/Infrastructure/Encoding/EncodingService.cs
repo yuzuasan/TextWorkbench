@@ -1,4 +1,5 @@
 using System.Text;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
 using TextWorkbench.Domain.Enums;
@@ -42,7 +43,7 @@ public sealed class EncodingService : IEncodingService
             else
             {
                 // UTF-16/UTF-32等は非対応
-                throw new NotSupportedException("対応していない文字コードです。");
+                throw new EncodingOperationException("対応していない文字コードのため、ファイルを開けません。");
             }
         }
 
@@ -70,7 +71,7 @@ public sealed class EncodingService : IEncodingService
         }
         catch
         {
-            throw new NotSupportedException("対応していない文字コードまたは形式です。");
+            throw new EncodingOperationException("対応していない文字コードまたは形式です。");
         }
     }
 
@@ -85,16 +86,23 @@ public sealed class EncodingService : IEncodingService
         if (text == null)
             throw new ArgumentNullException(nameof(text));
 
-        var systemEncoding = GetSystemEncoding(encoding);
-        var bytes = systemEncoding.GetBytes(text);
-
-        if (encoding == TextEncoding.Utf8Bom)
+        try
         {
-            var preamble = systemEncoding.GetPreamble();
-            return preamble.Concat(bytes).ToArray();
-        }
+            var systemEncoding = GetSystemEncoding(encoding);
+            var bytes = systemEncoding.GetBytes(text);
 
-        return bytes;
+            if (encoding == TextEncoding.Utf8Bom)
+            {
+                var preamble = systemEncoding.GetPreamble();
+                return preamble.Concat(bytes).ToArray();
+            }
+
+            return bytes;
+        }
+        catch (EncoderFallbackException)
+        {
+            throw new EncodingOperationException("現在の文字コードでは保存できない文字が含まれています。");
+        }
     }
 
     /// <summary>
@@ -129,7 +137,7 @@ public sealed class EncodingService : IEncodingService
                 "Shift-JIS",
                 EncoderFallback.ExceptionFallback,
                 DecoderFallback.ExceptionFallback),
-            _ => throw new ArgumentException("対応していない文字コードです。", nameof(encoding))
+            _ => throw new EncodingOperationException("対応していない文字コードです。")
         };
     }
 }
