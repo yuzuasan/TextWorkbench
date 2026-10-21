@@ -1,4 +1,5 @@
 using System.IO;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
 using TextWorkbench.Presentation.ViewModels;
@@ -66,7 +67,7 @@ public class SaveDocumentAsUseCase
         var existingTab = workspace.FindDocumentByFilePath(newFilePath);
         if (existingTab != null && existingTab.Document != document)
         {
-            throw new InvalidOperationException("指定されたファイルは別のDocumentとして既に開かれています。");
+            throw new ValidationOperationException("指定されたファイルは別のDocumentとして既に開かれています。");
         }
 
         try

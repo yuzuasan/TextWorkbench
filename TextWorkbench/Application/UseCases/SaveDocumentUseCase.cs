@@ -1,3 +1,4 @@
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
 
@@ -41,7 +42,7 @@ public class SaveDocumentUseCase
 
         if (document.FilePath == null)
         {
-            throw new InvalidOperationException("FilePathがnullのDocumentは保存できません。Save Asを使用してください。");
+            throw new ValidationOperationException("FilePathがnullのDocumentは保存できません。Save Asを使用してください。");
         }
 
         try

@@ -273,6 +273,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _notificationService.ShowError(ex.Message);
         }
+        catch (ValidationOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
         catch (Exception)
         {
             _notificationService.ShowError("保存に失敗しました。");
@@ -317,6 +321,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _notificationService.ShowError(ex.Message);
         }
         catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (ValidationOperationException ex)
         {
             _notificationService.ShowError(ex.Message);
         }
@@ -372,6 +380,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _notificationService.ShowError(ex.Message);
         }
+        catch (ValidationOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
         catch (Exception)
         {
             // 保存失敗などの場合はタブを残してエラーを通知する。
@@ -420,6 +432,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return false;
         }
         catch (EncodingOperationException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+            return false;
+        }
+        catch (ValidationOperationException ex)
         {
             _notificationService.ShowError(ex.Message);
             return false;
