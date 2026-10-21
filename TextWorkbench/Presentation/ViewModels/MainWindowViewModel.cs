@@ -1,6 +1,6 @@
-using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
 using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
@@ -218,11 +218,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Workspace.AddTab(tab);
             RefreshCommandStates();
         }
-        catch (FileOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (EncodingOperationException ex)
+        catch (TextWorkbenchException ex)
         {
             _notificationService.ShowError(ex.Message);
         }
@@ -265,15 +261,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _saveDocumentUseCase.Execute(document);
             documentTab.OnDocumentSaved();
         }
-        catch (FileOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (EncodingOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (ValidationOperationException ex)
+        catch (TextWorkbenchException ex)
         {
             _notificationService.ShowError(ex.Message);
         }
@@ -316,15 +304,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 documentTab.OnDocumentSavedAs();
             }
         }
-        catch (FileOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (EncodingOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (ValidationOperationException ex)
+        catch (TextWorkbenchException ex)
         {
             _notificationService.ShowError(ex.Message);
         }
@@ -372,15 +352,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // タブの追加・削除はWorkspaceを通して行う。
             Workspace.RemoveTab(documentTab);
         }
-        catch (FileOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (EncodingOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (ValidationOperationException ex)
+        catch (TextWorkbenchException ex)
         {
             _notificationService.ShowError(ex.Message);
         }
@@ -426,17 +398,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             return _exitApplicationUseCase.Execute(Workspace);
         }
-        catch (FileOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-            return false;
-        }
-        catch (EncodingOperationException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-            return false;
-        }
-        catch (ValidationOperationException ex)
+        catch (TextWorkbenchException ex)
         {
             _notificationService.ShowError(ex.Message);
             return false;
