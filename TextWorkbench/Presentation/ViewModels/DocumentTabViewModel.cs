@@ -130,6 +130,27 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     }
 
     /// <summary>
+    /// 検索結果を設定し、現在位置を未選択状態へ戻します。
+    /// </summary>
+    /// <param name="results">検索結果一覧</param>
+    public void SetSearchResults(IReadOnlyList<SearchResult> results)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+
+        SearchResults = results;
+        CurrentSearchIndex = -1;
+    }
+
+    /// <summary>
+    /// 検索結果と現在位置を初期状態へ戻します。
+    /// </summary>
+    public void ClearSearchResults()
+    {
+        SearchResults = Array.Empty<SearchResult>();
+        CurrentSearchIndex = -1;
+    }
+
+    /// <summary>
     /// Documentの状態変更時に呼び出します。
     /// </summary>
     public void OnDocumentStateChanged()
@@ -151,6 +172,10 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     {
         OnPropertyChanged(nameof(IsModified));
         OnPropertyChanged(nameof(IsEditable));
+
+        // 検索結果はDocument.CurrentContentの文字位置を保持するため、
+        // 内容が変更された時点で古い検索結果を破棄します。
+        ClearSearchResults();
 
         if (syncFromDocument)
         {
