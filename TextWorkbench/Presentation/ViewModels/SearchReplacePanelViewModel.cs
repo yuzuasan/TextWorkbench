@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using TextWorkbench.Domain.Models;
 
 namespace TextWorkbench.Presentation.ViewModels;
@@ -11,6 +12,12 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
 {
     private DocumentTabViewModel? _activeDocumentTab;
     private string _replaceText = string.Empty;
+    private bool _isOpen;
+
+    public SearchReplacePanelViewModel()
+    {
+        CloseCommand = new RelayCommand(() => IsOpen = false);
+    }
 
     /// <summary>
     /// 検索・置換の対象となるアクティブなDocumentTabを取得または設定します。
@@ -44,8 +51,34 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
             OnPropertyChanged(nameof(IsRegex));
             OnPropertyChanged(nameof(SearchResults));
             OnPropertyChanged(nameof(CurrentSearchIndex));
+            OnPropertyChanged(nameof(IsVisible));
         }
     }
+
+    /// <summary>
+    /// パネルを開いているかどうかを取得または設定します。
+    /// </summary>
+    public bool IsOpen
+    {
+        get => _isOpen;
+        set
+        {
+            if (SetProperty(ref _isOpen, value))
+            {
+                OnPropertyChanged(nameof(IsVisible));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Documentタブがアクティブで、かつパネルが開いている場合に表示します。
+    /// </summary>
+    public bool IsVisible => IsOpen && ActiveDocumentTab != null;
+
+    /// <summary>
+    /// パネルを閉じるコマンドを取得します。
+    /// </summary>
+    public IRelayCommand CloseCommand { get; }
 
     /// <summary>
     /// アクティブなDocumentTabの検索文字列を取得または設定します。

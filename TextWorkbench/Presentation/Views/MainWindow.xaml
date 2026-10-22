@@ -7,8 +7,13 @@
         xmlns:viewModels="clr-namespace:TextWorkbench.Presentation.ViewModels"
         mc:Ignorable="d"
         Title="TextWorkbench" Height="600" Width="1000">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -73,9 +78,16 @@
             </Button>
         </ToolBar>
 
+        <!-- SearchReplacePanel -->
+        <local:SearchReplacePanel
+            Grid.Row="2"
+            DataContext="{Binding SearchReplacePanelViewModel}"
+            Visibility="{Binding IsVisible,
+                                 Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
         <!-- TabControl -->
         <TabControl x:Name="MainTabControl"
-                    Grid.Row="2"
+                    Grid.Row="3"
                     ItemsSource="{Binding Workspace.Tabs}"
                     SelectedItem="{Binding Workspace.ActiveTab, Mode=TwoWay}"
                     SelectionChanged="MainTabControl_SelectionChanged">
@@ -134,7 +146,7 @@
         </TabControl>
 
         <!-- StatusBar -->
-        <StatusBar Grid.Row="3">
+        <StatusBar Grid.Row="4">
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusEncoding}"/>
             </StatusBarItem>

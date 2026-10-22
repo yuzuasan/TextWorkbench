@@ -32,6 +32,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public Workspace Workspace { get; }
 
     /// <summary>
+    /// 検索・置換パネルのViewModelを取得します。
+    /// </summary>
+    public SearchReplacePanelViewModel SearchReplacePanelViewModel { get; }
+
+    /// <summary>
     /// ウィンドウの終了要求を通知します。
     /// </summary>
     public event EventHandler? ExitRequested;
@@ -151,6 +156,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _exitApplicationUseCase = exitApplicationUseCase ?? throw new ArgumentNullException(nameof(exitApplicationUseCase));
 
         Workspace = new Workspace();
+        SearchReplacePanelViewModel = new SearchReplacePanelViewModel();
 
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
@@ -169,6 +175,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         // ActiveTabの切り替えと、アクティブなDocumentTabの状態変更を監視する。
         Workspace.PropertyChanged += OnWorkspacePropertyChanged;
+        SearchReplacePanelViewModel.ActiveDocumentTab = Workspace.ActiveTab as DocumentTabViewModel;
         ObserveActiveTabForStatusBar();
         UpdateStatusBarInfo();
 
@@ -411,10 +418,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanExecuteSearch() => !IsProcessing;
-    private void ExecuteSearch() => _notificationService.ShowInfo("検索（仮実装）");
+
+    private void ExecuteSearch()
+    {
+        OpenSearchReplacePanel();
+    }
 
     private bool CanExecuteReplace() => !IsProcessing;
-    private void ExecuteReplace() => _notificationService.ShowInfo("置換（仮実装）");
+
+    private void ExecuteReplace()
+    {
+        OpenSearchReplacePanel();
+    }
 
     private bool CanExecuteCompare() => !IsProcessing;
     private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
@@ -499,6 +514,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 検索・置換パネルを表示します。
+    /// </summary>
+    private void OpenSearchReplacePanel()
+    {
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        {
+            return;
+        }
+
+        SearchReplacePanelViewModel.ActiveDocumentTab = documentTab;
+        SearchReplacePanelViewModel.IsOpen = true;
+    }
+
+    /// <summary>
     /// Workspaceのプロパティ変更を処理します。
     /// </summary>
     private void OnWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -508,6 +537,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        SearchReplacePanelViewModel.ActiveDocumentTab = Workspace.ActiveTab as DocumentTabViewModel;
         ObserveActiveTabForStatusBar();
         UpdateStatusBarInfo();
         RefreshCommandStates();
