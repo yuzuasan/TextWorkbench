@@ -17,6 +17,7 @@ public partial class DocumentView : UserControl
 {
     private TextEditorDocumentBehavior? _documentBehavior;
     private EditorStateBehavior? _editorStateBehavior;
+    private SearchHighlightBehavior? _searchHighlightBehavior;
     private readonly ILineEndingService _lineEndingService;
 
     private TextEditor? _textEditor;
@@ -47,6 +48,11 @@ public partial class DocumentView : UserControl
             if (_editorStateBehavior != null)
             {
                 _editorStateBehavior.Document = null;
+            }
+
+            if (_searchHighlightBehavior != null)
+            {
+                _searchHighlightBehavior.ViewModel = null;
             }
         }
     }
@@ -125,6 +131,15 @@ public partial class DocumentView : UserControl
 
         // 現在のViewModelとEditorStateBehaviorの関連付けも更新する。
         viewModel.SetEditorStateBehavior(_editorStateBehavior);
+
+        // 検索ハイライトBehaviorをTextEditorと現在のViewModelへ接続する。
+        if (_searchHighlightBehavior == null)
+        {
+            _searchHighlightBehavior = new SearchHighlightBehavior();
+            _searchHighlightBehavior.TextEditor = textEditor;
+        }
+
+        _searchHighlightBehavior.ViewModel = viewModel;
 
         // タブ切替時にも、現在のEditor位置を新しいViewModelへ渡す。
         UpdateCaretPosition(viewModel, textEditor);
