@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using TextWorkbench.Application.Interfaces;
+using TextWorkbench.Application.Services;
 using TextWorkbench.Application.UseCases;
 using TextWorkbench.Infrastructure.Encoding;
 using TextWorkbench.Infrastructure.File;
@@ -24,6 +25,9 @@ namespace TextWorkbench
             IFileService fileService = new FileService();
             IEncodingService encodingService = new EncodingService();
             ILineEndingService lineEndingService = new LineEndingService();
+
+            // Applicationサービスを作成
+            ISearchService searchService = new SearchService();
 
             // Presentationサービスを作成
             IUserNotificationService notificationService = new MessageBoxNotificationService();
@@ -56,6 +60,7 @@ namespace TextWorkbench
                 notificationService,
                 saveDocumentUseCase,
                 saveDocumentAsUseCase);
+            var searchTextUseCase = new SearchTextUseCase(searchService);
 
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
@@ -65,7 +70,8 @@ namespace TextWorkbench
                 saveDocumentUseCase,
                 saveDocumentAsUseCase,
                 closeDocumentUseCase,
-                exitApplicationUseCase);
+                exitApplicationUseCase,
+                searchTextUseCase);
 
             // MainWindowを作成
             var mainWindow = new MainWindow

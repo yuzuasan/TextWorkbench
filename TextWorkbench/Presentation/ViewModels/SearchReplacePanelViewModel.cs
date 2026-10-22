@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TextWorkbench.Application.UseCases;
 using TextWorkbench.Domain.Models;
 
 namespace TextWorkbench.Presentation.ViewModels;
@@ -10,12 +11,20 @@ namespace TextWorkbench.Presentation.ViewModels;
 /// </summary>
 public sealed class SearchReplacePanelViewModel : ObservableObject
 {
+    private readonly SearchTextUseCase _searchTextUseCase;
     private DocumentTabViewModel? _activeDocumentTab;
     private string _replaceText = string.Empty;
     private bool _isOpen;
 
-    public SearchReplacePanelViewModel()
+    /// <summary>
+    /// SearchReplacePanelViewModelの新しいインスタンスを初期化します。
+    /// </summary>
+    /// <param name="searchTextUseCase">検索UseCase</param>
+    public SearchReplacePanelViewModel(SearchTextUseCase searchTextUseCase)
     {
+        _searchTextUseCase = searchTextUseCase
+            ?? throw new ArgumentNullException(nameof(searchTextUseCase));
+
         CloseCommand = new RelayCommand(() => IsOpen = false);
     }
 
@@ -89,13 +98,15 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
         get => _activeDocumentTab?.SearchText ?? string.Empty;
         set
         {
+            var searchText = value ?? string.Empty;
+
             if (_activeDocumentTab == null
-                || _activeDocumentTab.SearchText == value)
+                || _activeDocumentTab.SearchText == searchText)
             {
                 return;
             }
 
-            _activeDocumentTab.SearchText = value ?? string.Empty;
+            _activeDocumentTab.SearchText = searchText;
             OnPropertyChanged();
         }
     }
@@ -153,10 +164,12 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
         if (e.PropertyName == nameof(DocumentTabViewModel.SearchText))
         {
             OnPropertyChanged(nameof(SearchText));
+            ExecuteSearch();
         }
         else if (e.PropertyName == nameof(DocumentTabViewModel.IsRegex))
         {
             OnPropertyChanged(nameof(IsRegex));
+            ExecuteSearch();
         }
         else if (e.PropertyName == nameof(DocumentTabViewModel.SearchResults))
         {
@@ -165,6 +178,41 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
         else if (e.PropertyName == nameof(DocumentTabViewModel.CurrentSearchIndex))
         {
             OnPropertyChanged(nameof(CurrentSearchIndex));
+        }
+    }
+
+    /// <summary>
+    /// アクティブなDocumentTabの内容を検索します。
+    /// </summary>
+    private void ExecuteSearch()
+    {
+        if (_activeDocumentTab == null)
+        {
+            return;
+        }
+
+        var searchText = _activeDocumentTab.SearchText;
+
+        // 空の検索文字列では検索結果をクリアします。
+        if (string.IsNullOrEmpty(searchText))
+        {
+            _activeDocumentTab.ClearSearchResults();
+            return;
+        }
+
+        try
+        {
+            var results = _searchTextUseCase.Execute(
+                _activeDocumentTab.Document.CurrentContent,
+                searchText,
+                _activeDocumentTab.IsRegex);
+
+            _activeDocumentTab.SetSearchResults(results);
+        }
+        catch (NotSupportedException)
+        {
+            // 未対応の検索方法では古い結果を残さないようにします。
+            _activeDocumentTab.ClearSearchResults();
         }
     }
 }
