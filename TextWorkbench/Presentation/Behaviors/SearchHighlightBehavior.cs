@@ -314,7 +314,7 @@ public sealed class SearchHighlightBehavior
             Array.Empty<HighlightRange>();
 
         private static readonly Brush SearchBrush =
-            CreateFrozenBrush(Color.FromArgb(100, 255, 220, 80));
+            CreateFrozenBrush(Color.FromArgb(160, 255, 210, 50));
 
         public KnownLayer Layer => KnownLayer.Background;
 
