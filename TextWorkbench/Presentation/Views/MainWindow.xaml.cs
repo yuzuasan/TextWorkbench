@@ -17,6 +17,7 @@ namespace TextWorkbench.Presentation.Views
 
             DataContextChanged += MainWindow_DataContextChanged;
             Closing += MainWindow_Closing;
+            SearchReplacePanelView.IsVisibleChanged += SearchReplacePanel_IsVisibleChanged;
         }
 
         /// <summary>
@@ -46,6 +47,23 @@ namespace TextWorkbench.Presentation.Views
         {
             // 子要素からバブルアップしたSelectionChangedは対象外にします。
             if (!ReferenceEquals(e.OriginalSource, MainTabControl))
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(
+                DispatcherPriority.Loaded,
+                new Action(FocusActiveDocumentEditor));
+        }
+
+        /// <summary>
+        /// 検索パネルが閉じられたとき、アクティブなエディタにフォーカスを戻します。
+        /// </summary>
+        private void SearchReplacePanel_IsVisibleChanged(
+            object sender,
+            DependencyPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is not false)
             {
                 return;
             }

@@ -80,10 +80,11 @@
 
         <!-- SearchReplacePanel -->
         <local:SearchReplacePanel
+            x:Name="SearchReplacePanelView"
             Grid.Row="2"
             DataContext="{Binding SearchReplacePanelViewModel}"
             Visibility="{Binding IsVisible,
-                                 Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- TabControl -->
         <TabControl x:Name="MainTabControl"
