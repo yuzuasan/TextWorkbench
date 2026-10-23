@@ -62,6 +62,9 @@ namespace TextWorkbench
                 saveDocumentAsUseCase);
             var searchTextUseCase = new SearchTextUseCase(searchService);
 
+            // Workspaceを作成
+            var workspace = new Workspace();
+
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
                 notificationService,
@@ -71,7 +74,8 @@ namespace TextWorkbench
                 saveDocumentAsUseCase,
                 closeDocumentUseCase,
                 exitApplicationUseCase,
-                searchTextUseCase);
+                searchTextUseCase,
+                workspace);
 
             // MainWindowを作成
             var mainWindow = new MainWindow
