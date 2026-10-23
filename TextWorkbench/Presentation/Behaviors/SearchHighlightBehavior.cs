@@ -88,7 +88,7 @@ public sealed class SearchHighlightBehavior
 
         _textEditor.TextChanged -= OnTextChanged;
         _textEditor.TextArea.TextView.BackgroundRenderers.Remove(_backgroundRenderer);
-        _backgroundRenderer.SetResults(Array.Empty<SearchResult>());
+        _backgroundRenderer.SetResults(Array.Empty<HighlightRange>());
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -107,6 +107,10 @@ public sealed class SearchHighlightBehavior
         UpdateHighlights();
     }
 
+    /// <summary>
+    /// 検索結果をエディタのオフセット体系へ変換し、
+    /// ハイライトと現在の検索結果の選択で共有します。
+    /// </summary>
     private void UpdateHighlights()
     {
         if (_textEditor == null)
@@ -115,29 +119,141 @@ public sealed class SearchHighlightBehavior
         }
 
         var results = _viewModel?.SearchResults ?? Array.Empty<SearchResult>();
-        _backgroundRenderer.SetResults(results);
+
+        // 検索結果を一度だけ変換し、全件ハイライトと選択で共有します。
+        var ranges = new HighlightRange?[results.Count];
+
+        for (var i = 0; i < results.Count; i++)
+        {
+            var result = results[i];
+
+            if (!TryConvertRange(
+                    result.StartIndex,
+                    result.Length,
+                    out var startOffset,
+                    out var length)
+                || !IsValidRange(startOffset, length))
+            {
+                ranges[i] = null;
+                continue;
+            }
+
+            ranges[i] = new HighlightRange(startOffset, length);
+        }
+
+        var validRanges = ranges
+            .OfType<HighlightRange>()
+            .ToArray();
+
+        _backgroundRenderer.SetResults(validRanges);
         _textEditor.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
 
         var currentIndex = _viewModel?.CurrentSearchIndex ?? -1;
-        if (currentIndex < 0 || currentIndex >= results.Count)
+
+        if (currentIndex < 0 || currentIndex >= ranges.Length)
         {
             return;
         }
 
-        var currentResult = results[currentIndex];
-        if (!IsValidRange(currentResult.StartIndex, currentResult.Length))
+        var currentRange = ranges[currentIndex];
+
+        if (currentRange == null)
         {
             return;
         }
 
-        // Current resultは全件ハイライトとは別に、AvalonEditのSelectionで強調します。
-        _textEditor.Select(currentResult.StartIndex, currentResult.Length);
+        // 全件ハイライトと同じ変換済み範囲を選択に使用します。
+        _textEditor.Select(
+            currentRange.StartOffset,
+            currentRange.Length);
 
-        // ScrollToは行・列を受け取るため、文字オフセットをDocumentLocationへ変換します。
-        var location = _textEditor.Document.GetLocation(currentResult.StartIndex);
+        // ScrollToは行・列を受け取るため、変換後の位置を使用します。
+        var location = _textEditor.Document.GetLocation(
+            currentRange.StartOffset);
+
         _textEditor.ScrollTo(location.Line, location.Column);
     }
 
+    /// <summary>
+    /// LF基準のオフセットをエディタのテキスト位置へ変換します。
+    /// CRLFはLF基準では1文字、CRLF基準では2文字として扱います。
+    /// </summary>
+    private int ConvertLfOffsetToEditorOffset(int lfOffset)
+    {
+        if (_textEditor == null || lfOffset < 0)
+        {
+            return -1;
+        }
+
+        if (lfOffset == 0)
+        {
+            return 0;
+        }
+
+        var editorText = _textEditor.Text;
+        var logicalOffset = 0;
+        var editorOffset = 0;
+
+        while (editorOffset < editorText.Length
+            && logicalOffset < lfOffset)
+        {
+            if (editorText[editorOffset] == '\r'
+                && editorOffset + 1 < editorText.Length
+                && editorText[editorOffset + 1] == '\n')
+            {
+                // CRLFは2文字消費し、論理上の位置は1つ進めます。
+                editorOffset += 2;
+            }
+            else
+            {
+                editorOffset++;
+            }
+
+            logicalOffset++;
+        }
+
+        // 指定された位置まで到達できなければ無効な位置です。
+        return logicalOffset == lfOffset
+            ? editorOffset
+            : -1;
+    }
+
+    /// <summary>
+    /// 検索結果の開始位置と終了位置を変換し、
+    /// 変換後の範囲を取得します。
+    /// </summary>
+    private bool TryConvertRange(
+        int startIndex,
+        int length,
+        out int convertedStart,
+        out int convertedLength)
+    {
+        convertedStart = 0;
+        convertedLength = 0;
+
+        if (startIndex < 0 || length < 0)
+        {
+            return false;
+        }
+
+        var convertedEnd = ConvertLfOffsetToEditorOffset(
+            startIndex + length);
+
+        convertedStart = ConvertLfOffsetToEditorOffset(startIndex);
+
+        if (convertedStart < 0
+            || convertedEnd < convertedStart)
+        {
+            return false;
+        }
+
+        convertedLength = convertedEnd - convertedStart;
+        return true;
+    }
+
+    /// <summary>
+    /// 変換後の範囲がAvalonEditのDocument内に収まるか確認します。
+    /// </summary>
     private bool IsValidRange(int startIndex, int length)
     {
         if (_textEditor?.Document == null)
@@ -152,23 +268,35 @@ public sealed class SearchHighlightBehavior
             && length <= documentLength - startIndex;
     }
 
+    /// <summary>
+    /// エディタ上で表示する変換済みの検索範囲です。
+    /// </summary>
+    private sealed record HighlightRange(
+        int StartOffset,
+        int Length);
+
+    /// <summary>
+    /// 検索結果の背景ハイライトを描画します。
+    /// このクラスには変換済みの範囲を渡します。
+    /// </summary>
     private sealed class SearchResultBackgroundRenderer : IBackgroundRenderer
     {
-        private IReadOnlyList<SearchResult> _results = Array.Empty<SearchResult>();
+        private IReadOnlyList<HighlightRange> _ranges =
+            Array.Empty<HighlightRange>();
 
         private static readonly Brush SearchBrush =
             CreateFrozenBrush(Color.FromArgb(100, 255, 220, 80));
 
         public KnownLayer Layer => KnownLayer.Background;
 
-        public void SetResults(IReadOnlyList<SearchResult> results)
+        public void SetResults(IReadOnlyList<HighlightRange> ranges)
         {
-            _results = results;
+            _ranges = ranges;
         }
 
         public void Draw(TextView textView, DrawingContext drawingContext)
         {
-            if (_results.Count == 0 || !textView.VisualLinesValid)
+            if (_ranges.Count == 0 || !textView.VisualLinesValid)
             {
                 return;
             }
@@ -179,20 +307,20 @@ public sealed class SearchHighlightBehavior
                 return;
             }
 
-            foreach (var result in _results)
+            foreach (var range in _ranges)
             {
-                if (result.StartIndex < 0
-                    || result.Length <= 0
-                    || result.StartIndex >= document.TextLength
-                    || result.Length > document.TextLength - result.StartIndex)
+                if (range.StartOffset < 0
+                    || range.Length <= 0
+                    || range.StartOffset >= document.TextLength
+                    || range.Length > document.TextLength - range.StartOffset)
                 {
                     continue;
                 }
 
                 var segment = new TextSegment
                 {
-                    StartOffset = result.StartIndex,
-                    Length = result.Length
+                    StartOffset = range.StartOffset,
+                    Length = range.Length
                 };
 
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment))
