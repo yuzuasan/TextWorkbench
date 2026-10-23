@@ -18,6 +18,7 @@ public sealed class SearchHighlightBehavior
     private TextEditor? _textEditor;
     private DocumentTabViewModel? _viewModel;
     private readonly SearchResultBackgroundRenderer _backgroundRenderer = new();
+    private bool _isHighlightVisible = true;
 
     /// <summary>
     /// TextEditorを取得または設定します。
@@ -64,6 +65,25 @@ public sealed class SearchHighlightBehavior
                 _viewModel.PropertyChanged += OnViewModelPropertyChanged;
             }
 
+            UpdateHighlights();
+        }
+    }
+
+    /// <summary>
+    /// 検索ハイライトを表示するかどうかを取得または設定します。
+    /// falseの場合も検索状態は保持します。
+    /// </summary>
+    public bool IsHighlightVisible
+    {
+        get => _isHighlightVisible;
+        set
+        {
+            if (_isHighlightVisible == value)
+            {
+                return;
+            }
+
+            _isHighlightVisible = value;
             UpdateHighlights();
         }
     }
@@ -115,6 +135,15 @@ public sealed class SearchHighlightBehavior
     {
         if (_textEditor == null)
         {
+            return;
+        }
+
+        // パネルが非表示の場合は、検索状態を変更せず表示だけ解除します。
+        if (!_isHighlightVisible)
+        {
+            _backgroundRenderer.SetResults(Array.Empty<HighlightRange>());
+            _textEditor.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
+
             return;
         }
 

@@ -1,4 +1,5 @@
 using ICSharpCode.AvalonEdit;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,6 +19,9 @@ public partial class DocumentView : UserControl
     private TextEditorDocumentBehavior? _documentBehavior;
     private EditorStateBehavior? _editorStateBehavior;
     private SearchHighlightBehavior? _searchHighlightBehavior;
+
+    private SearchReplacePanelViewModel? _observedSearchPanelViewModel;
+
     private readonly ILineEndingService _lineEndingService;
 
     private TextEditor? _textEditor;
@@ -29,6 +33,7 @@ public partial class DocumentView : UserControl
         _lineEndingService = new LineEndingService();
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs e)
@@ -39,6 +44,8 @@ public partial class DocumentView : UserControl
         }
         else
         {
+            DetachSearchPanelVisibility();
+
             // DataContextがDocumentTabViewModelでなくなった場合、Behaviorをクリア
             if (_documentBehavior != null)
             {
@@ -63,6 +70,11 @@ public partial class DocumentView : UserControl
         {
             InitializeBehaviors(viewModel);
         }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        DetachSearchPanelVisibility();
     }
 
     /// <summary>
@@ -141,8 +153,83 @@ public partial class DocumentView : UserControl
 
         _searchHighlightBehavior.ViewModel = viewModel;
 
+        // Searchパネルの表示状態をBehaviorへ連携します。
+        AttachSearchPanelVisibility();
+
         // タブ切替時にも、現在のEditor位置を新しいViewModelへ渡す。
         UpdateCaretPosition(viewModel, textEditor);
+    }
+
+    /// <summary>
+    /// MainWindowのSearchReplacePanelViewModelを監視します。
+    /// </summary>
+    private void AttachSearchPanelVisibility()
+    {
+        var window = Window.GetWindow(this);
+
+        var searchPanelViewModel =
+            (window?.DataContext as MainWindowViewModel)?
+            .SearchReplacePanelViewModel;
+
+        if (!ReferenceEquals(
+                _observedSearchPanelViewModel,
+                searchPanelViewModel))
+        {
+            DetachSearchPanelVisibility();
+
+            _observedSearchPanelViewModel = searchPanelViewModel;
+
+            if (_observedSearchPanelViewModel != null)
+            {
+                _observedSearchPanelViewModel.PropertyChanged
+                    += OnSearchPanelPropertyChanged;
+            }
+        }
+
+        UpdateSearchHighlightVisibility();
+    }
+
+    /// <summary>
+    /// Searchパネルの表示状態変更を処理します。
+    /// </summary>
+    private void OnSearchPanelPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SearchReplacePanelViewModel.IsVisible))
+        {
+            UpdateSearchHighlightVisibility();
+        }
+    }
+
+    /// <summary>
+    /// Searchパネルの表示状態を検索ハイライトBehaviorへ反映します。
+    /// </summary>
+    private void UpdateSearchHighlightVisibility()
+    {
+        if (_searchHighlightBehavior == null)
+        {
+            return;
+        }
+
+        _searchHighlightBehavior.IsHighlightVisible =
+            _observedSearchPanelViewModel?.IsVisible ?? false;
+    }
+
+    /// <summary>
+    /// SearchパネルのPropertyChanged購読を解除します。
+    /// </summary>
+    private void DetachSearchPanelVisibility()
+    {
+        if (_observedSearchPanelViewModel != null)
+        {
+            _observedSearchPanelViewModel.PropertyChanged
+                -= OnSearchPanelPropertyChanged;
+
+            _observedSearchPanelViewModel = null;
+        }
+
+        UpdateSearchHighlightVisibility();
     }
 
     private void OnCaretPositionChanged(object? sender, EventArgs e)
