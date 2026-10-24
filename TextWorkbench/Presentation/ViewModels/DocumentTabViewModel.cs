@@ -151,6 +151,40 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     }
 
     /// <summary>
+    /// 次の検索結果へ移動します。末尾の次は先頭へ循環します。
+    /// </summary>
+    public void FindNext()
+    {
+        var resultCount = SearchResults.Count;
+        if (resultCount == 0)
+        {
+            return;
+        }
+
+        CurrentSearchIndex = CurrentSearchIndex < 0
+            || CurrentSearchIndex >= resultCount - 1
+                ? 0
+                : CurrentSearchIndex + 1;
+    }
+
+    /// <summary>
+    /// 前の検索結果へ移動します。先頭の前は末尾へ循環します。
+    /// </summary>
+    public void FindPrevious()
+    {
+        var resultCount = SearchResults.Count;
+        if (resultCount == 0)
+        {
+            return;
+        }
+
+        CurrentSearchIndex = CurrentSearchIndex <= 0
+            || CurrentSearchIndex >= resultCount
+                ? resultCount - 1
+                : CurrentSearchIndex - 1;
+    }
+
+    /// <summary>
     /// Documentの状態変更時に呼び出します。
     /// </summary>
     public void OnDocumentStateChanged()

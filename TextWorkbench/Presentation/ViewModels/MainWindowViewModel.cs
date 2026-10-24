@@ -129,6 +129,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand CompareCommand { get; }
 
     /// <summary>
+    /// 次の検索結果へ移動するコマンドを取得します。
+    /// </summary>
+    public IRelayCommand FindNextCommand { get; }
+
+    /// <summary>
+    /// 前の検索結果へ移動するコマンドを取得します。
+    /// </summary>
+    public IRelayCommand FindPreviousCommand { get; }
+
+    /// <summary>
     /// <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="notificationService">通知サービス</param>
@@ -171,6 +181,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SearchCommand = new RelayCommand(ExecuteSearch, CanExecuteSearch);
         ReplaceCommand = new RelayCommand(ExecuteReplace, CanExecuteReplace);
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
+        FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
+        FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
 
         // 起動直後から編集できるよう、初期Documentを作成してWorkspaceへ追加する。
         var initialDocument = _newDocumentUseCase.Execute();
@@ -438,6 +450,30 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanExecuteCompare() => !IsProcessing;
     private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
 
+    private bool CanExecuteFindNext() =>
+        Workspace.ActiveTab is DocumentTabViewModel documentTab
+        && documentTab.SearchResults.Count > 0;
+
+    private void ExecuteFindNext()
+    {
+        if (Workspace.ActiveTab is DocumentTabViewModel documentTab)
+        {
+            documentTab.FindNext();
+        }
+    }
+
+    private bool CanExecuteFindPrevious() =>
+        Workspace.ActiveTab is DocumentTabViewModel documentTab
+        && documentTab.SearchResults.Count > 0;
+
+    private void ExecuteFindPrevious()
+    {
+        if (Workspace.ActiveTab is DocumentTabViewModel documentTab)
+        {
+            documentTab.FindPrevious();
+        }
+    }
+
     /// <summary>
     /// StatusBar情報を更新します。
     /// </summary>
@@ -571,6 +607,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(DocumentTabViewModel.SearchResults))
+        {
+            RefreshCommandStates();
+            return;
+        }
+
         // Caret位置が変わった場合もStatusBarを更新する。
         if (e.PropertyName is nameof(DocumentTabViewModel.CaretLine)
             or nameof(DocumentTabViewModel.CaretColumn))
@@ -604,5 +646,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SearchCommand.NotifyCanExecuteChanged();
         ReplaceCommand.NotifyCanExecuteChanged();
         CompareCommand.NotifyCanExecuteChanged();
+        FindNextCommand.NotifyCanExecuteChanged();
+        FindPreviousCommand.NotifyCanExecuteChanged();
     }
 }
