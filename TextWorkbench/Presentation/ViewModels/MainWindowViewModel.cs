@@ -149,6 +149,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="closeDocumentUseCase">Documentを閉じるUseCase</param>
     /// <param name="exitApplicationUseCase">アプリケーション終了UseCase</param>
     /// <param name="searchTextUseCase">検索UseCase</param>
+    /// <param name="replaceTextUseCase">置換UseCase</param>
     /// <param name="workspace">アプリケーション全体の作業領域</param>
     public MainWindowViewModel(
         IUserNotificationService notificationService,
@@ -159,6 +160,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         CloseDocumentUseCase closeDocumentUseCase,
         ExitApplicationUseCase exitApplicationUseCase,
         SearchTextUseCase searchTextUseCase,
+        ReplaceTextUseCase replaceTextUseCase,
         Workspace workspace)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -170,7 +172,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _exitApplicationUseCase = exitApplicationUseCase ?? throw new ArgumentNullException(nameof(exitApplicationUseCase));
 
         Workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
-        SearchReplacePanelViewModel = new SearchReplacePanelViewModel(searchTextUseCase);
+        SearchReplacePanelViewModel = new SearchReplacePanelViewModel(
+            searchTextUseCase,
+            replaceTextUseCase);
 
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);

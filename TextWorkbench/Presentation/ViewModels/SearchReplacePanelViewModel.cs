@@ -1,6 +1,7 @@
-﻿using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
+using TextWorkbench.Application.Models;
 using TextWorkbench.Application.UseCases;
 using TextWorkbench.Domain.Models;
 
@@ -12,6 +13,7 @@ namespace TextWorkbench.Presentation.ViewModels;
 public sealed class SearchReplacePanelViewModel : ObservableObject
 {
     private readonly SearchTextUseCase _searchTextUseCase;
+    private readonly ReplaceTextUseCase _replaceTextUseCase;
     private DocumentTabViewModel? _activeDocumentTab;
     private string _replaceText = string.Empty;
     private bool _isOpen;
@@ -20,10 +22,15 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
     /// SearchReplacePanelViewModelの新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="searchTextUseCase">検索UseCase</param>
-    public SearchReplacePanelViewModel(SearchTextUseCase searchTextUseCase)
+    /// <param name="replaceTextUseCase">置換UseCase</param>
+    public SearchReplacePanelViewModel(
+        SearchTextUseCase searchTextUseCase,
+        ReplaceTextUseCase replaceTextUseCase)
     {
         _searchTextUseCase = searchTextUseCase
             ?? throw new ArgumentNullException(nameof(searchTextUseCase));
+        _replaceTextUseCase = replaceTextUseCase
+            ?? throw new ArgumentNullException(nameof(replaceTextUseCase));
 
         CloseCommand = new RelayCommand(() => IsOpen = false);
     }
@@ -153,6 +160,53 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
     /// </summary>
     public int CurrentSearchIndex =>
         _activeDocumentTab?.CurrentSearchIndex ?? -1;
+
+    /// <summary>
+    /// アクティブなDocumentの開始位置以降で、最初に一致した箇所を置換します。
+    /// 文書への反映と置換後の状態更新は呼び出し元が行います。
+    /// </summary>
+    /// <returns>置換後のテキストと置換情報</returns>
+    /// <exception cref="InvalidOperationException">
+    /// アクティブなDocumentTabが存在しない場合
+    /// </exception>
+    public ReplaceResult ReplaceFirst()
+    {
+        if (_activeDocumentTab == null)
+        {
+            throw new InvalidOperationException(
+                "置換対象のDocumentTabがありません。");
+        }
+
+        return _replaceTextUseCase.ExecuteFirst(
+            _activeDocumentTab.Document.CurrentContent,
+            SearchText,
+            ReplaceText,
+            IsRegex,
+            _activeDocumentTab.ReplaceNextStartIndex);
+    }
+
+    /// <summary>
+    /// アクティブなDocument全体を対象に、一致した箇所をすべて置換します。
+    /// 文書への反映と置換後の状態更新は呼び出し元が行います。
+    /// </summary>
+    /// <returns>置換後のテキストと置換情報</returns>
+    /// <exception cref="InvalidOperationException">
+    /// アクティブなDocumentTabが存在しない場合
+    /// </exception>
+    public ReplaceResult ReplaceAll()
+    {
+        if (_activeDocumentTab == null)
+        {
+            throw new InvalidOperationException(
+                "置換対象のDocumentTabがありません。");
+        }
+
+        return _replaceTextUseCase.ExecuteAll(
+            _activeDocumentTab.Document.CurrentContent,
+            SearchText,
+            ReplaceText,
+            IsRegex);
+    }
 
     /// <summary>
     /// アクティブなDocumentTabの検索状態変更をパネルへ通知します。
