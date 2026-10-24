@@ -139,6 +139,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand FindPreviousCommand { get; }
 
     /// <summary>
+    /// 次の一致箇所を置換するコマンドを取得します。
+    /// </summary>
+    public IRelayCommand ReplaceNextCommand { get; }
+
+    /// <summary>
     /// <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="notificationService">通知サービス</param>
@@ -187,6 +192,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
         FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
         FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
+        ReplaceNextCommand = new RelayCommand(ExecuteReplaceNext, CanExecuteReplaceNext);
 
         // 起動直後から編集できるよう、初期Documentを作成してWorkspaceへ追加する。
         var initialDocument = _newDocumentUseCase.Execute();
@@ -479,6 +485,70 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Replace Nextを実行できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteReplaceNext() =>
+        !IsProcessing
+        && Workspace.ActiveTab is DocumentTabViewModel documentTab
+        && documentTab.Document.IsEditable;
+
+    /// <summary>
+    /// 次の一致箇所を1件置換し、Documentへ反映します。
+    /// </summary>
+    private void ExecuteReplaceNext()
+    {
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab
+            || !documentTab.Document.IsEditable)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = SearchReplacePanelViewModel.ReplaceFirst();
+
+            // 一致箇所がない場合は文書を変更しません。
+            if (result.ReplacementCount == 0)
+            {
+                return;
+            }
+
+            // 置換成功時には、置換位置と挿入文字列の長さから
+            // 次回の検索開始位置を計算します。
+            var matchStartIndex = result.FirstMatchStartIndex!.Value;
+            var matchLength = result.FirstMatchLength!.Value;
+            var replacementLength = result.ReplacementLength!.Value;
+
+            var nextStartIndex = matchStartIndex + replacementLength;
+
+            // 長さ0の一致を空文字列へ置換した場合も、
+            // 同じ位置を次回の開始位置として再利用しません。
+            if (matchLength == 0)
+            {
+                nextStartIndex = matchStartIndex
+                    + Math.Max(replacementLength, 1);
+            }
+
+            // Documentを更新し、未保存状態とEditorへの同期、
+            // 検索結果の破棄を既存処理へ委譲します。
+            documentTab.Document.UpdateContent(result.Content);
+            documentTab.ReplaceNextStartIndex = nextStartIndex;
+            documentTab.OnDocumentContentChanged();
+
+            RefreshCommandStates();
+        }
+        catch (NotSupportedException ex)
+        {
+            // 未対応の正規表現置換など。
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("置換に失敗しました。");
+        }
+    }
+
+    /// <summary>
     /// StatusBar情報を更新します。
     /// </summary>
     private void UpdateStatusBarInfo()
@@ -652,5 +722,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         CompareCommand.NotifyCanExecuteChanged();
         FindNextCommand.NotifyCanExecuteChanged();
         FindPreviousCommand.NotifyCanExecuteChanged();
+        ReplaceNextCommand.NotifyCanExecuteChanged();
     }
 }
