@@ -94,11 +94,13 @@
                         Content="置換"
                         MinWidth="56"
                         Margin="0,0,4,0"
+                        Command="{Binding DataContext.ReplaceNextCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         ToolTip="次の一致箇所を置換"/>
 
                 <Button x:Name="ReplaceAllButton"
                         Content="すべて置換"
                         MinWidth="84"
+                        Command="{Binding DataContext.ReplaceAllCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         ToolTip="文書内の一致箇所をすべて置換"/>
             </StackPanel>
         </Grid>
