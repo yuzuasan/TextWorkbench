@@ -40,11 +40,10 @@
                 <MenuItem Header="コピー(_C)" Command="Copy"/>
                 <MenuItem Header="貼り付け(_P)" Command="Paste"/>
                 <Separator/>
+                <MenuItem Header="検索・置換(_F)"
+                          Command="{Binding OpenSearchReplacePanelCommand}"/>
+                <Separator/>
                 <MenuItem Header="すべて選択(_A)" Command="SelectAll"/>
-            </MenuItem>
-            <MenuItem Header="検索(_S)">
-                <MenuItem Header="検索(_F)" Command="{Binding SearchCommand}"/>
-                <MenuItem Header="置換(_R)" Command="{Binding ReplaceCommand}"/>
             </MenuItem>
             <MenuItem Header="比較(_C)">
                 <MenuItem Header="ファイルを比較(_C)" Command="{Binding CompareCommand}"/>
@@ -66,11 +65,9 @@
                 <TextBlock Text="名前を付けて保存"/>
             </Button>
             <Separator/>
-            <Button Command="{Binding SearchCommand}" ToolTip="検索">
-                <TextBlock Text="検索"/>
-            </Button>
-            <Button Command="{Binding ReplaceCommand}" ToolTip="置換">
-                <TextBlock Text="置換"/>
+            <Button Command="{Binding OpenSearchReplacePanelCommand}"
+                    ToolTip="検索・置換パネルを開く">
+                <TextBlock Text="検索・置換"/>
             </Button>
             <Separator/>
             <Button Command="{Binding CompareCommand}" ToolTip="比較">

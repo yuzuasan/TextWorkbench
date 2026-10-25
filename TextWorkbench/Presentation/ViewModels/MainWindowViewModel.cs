@@ -114,14 +114,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand ExitCommand { get; }
 
     /// <summary>
-    /// 検索コマンドを取得します。
+    /// 検索・置換パネルを開くコマンドを取得します。
     /// </summary>
-    public IRelayCommand SearchCommand { get; }
-
-    /// <summary>
-    /// 置換コマンドを取得します。
-    /// </summary>
-    public IRelayCommand ReplaceCommand { get; }
+    public IRelayCommand OpenSearchReplacePanelCommand { get; }
 
     /// <summary>
     /// 比較コマンドを取得します。
@@ -192,8 +187,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SaveAsCommand = new RelayCommand(ExecuteSaveAs, CanExecuteSaveAs);
         CloseCommand = new RelayCommand(ExecuteClose, CanExecuteClose);
         ExitCommand = new RelayCommand(ExecuteExit, CanExecuteExit);
-        SearchCommand = new RelayCommand(ExecuteSearch, CanExecuteSearch);
-        ReplaceCommand = new RelayCommand(ExecuteReplace, CanExecuteReplace);
+        OpenSearchReplacePanelCommand = new RelayCommand(ExecuteOpenSearchReplacePanel, CanExecuteOpenSearchReplacePanel);
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
         FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
         FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
@@ -449,16 +443,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanExecuteSearch() => !IsProcessing;
+    /// <summary>
+    /// 検索・置換パネルを開けるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteOpenSearchReplacePanel() => !IsProcessing;
 
-    private void ExecuteSearch()
-    {
-        OpenSearchReplacePanel();
-    }
-
-    private bool CanExecuteReplace() => !IsProcessing;
-
-    private void ExecuteReplace()
+    /// <summary>
+    /// 検索・置換パネルを開きます。
+    /// </summary>
+    private void ExecuteOpenSearchReplacePanel()
     {
         OpenSearchReplacePanel();
     }
@@ -781,8 +774,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SaveAsCommand.NotifyCanExecuteChanged();
         CloseCommand.NotifyCanExecuteChanged();
         ExitCommand.NotifyCanExecuteChanged();
-        SearchCommand.NotifyCanExecuteChanged();
-        ReplaceCommand.NotifyCanExecuteChanged();
+        OpenSearchReplacePanelCommand.NotifyCanExecuteChanged();
         CompareCommand.NotifyCanExecuteChanged();
         FindNextCommand.NotifyCanExecuteChanged();
         FindPreviousCommand.NotifyCanExecuteChanged();
