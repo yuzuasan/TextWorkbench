@@ -7,6 +7,7 @@
              d:DesignHeight="84"
              d:DesignWidth="800">
     <Border Padding="8"
+            Background="#F2F2F2"
             BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
             BorderThickness="0,0,0,1">
         <Grid>
@@ -63,11 +64,55 @@
 
                 <!-- 検索・置換パネルを閉じる -->
                 <Button x:Name="CloseButton"
-                        Content="×"
                         Command="{Binding CloseCommand}"
                         Width="28"
-                        ToolTip="検索・置換を閉じる"
-                        AutomationProperties.Name="検索・置換を閉じる"/>
+                        Height="26"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+                        ToolTip="検索・置換を閉じる">
+                    <Button.Template>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ButtonBorder"
+                                            Property="Background"
+                                            Value="#D9534F"/>
+                                    <Setter TargetName="ButtonBorder"
+                                            Property="BorderBrush"
+                                            Value="#C9302C"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="ButtonBorder"
+                                            Property="Background"
+                                            Value="#B52B27"/>
+                                    <Setter TargetName="ButtonBorder"
+                                            Property="BorderBrush"
+                                            Value="#A02622"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="×"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Button>
             </StackPanel>
 
             <!-- 置換 -->
