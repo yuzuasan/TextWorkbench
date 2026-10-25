@@ -216,6 +216,9 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         // 古い検索結果を破棄し、現在の検索位置をリセットします。
         ClearSearchResults();
 
+        // ドキュメント内容が変わったため、置換開始位置をリセットします。
+        ReplaceNextStartIndex = 0;
+
         if (syncFromDocument)
         {
             _documentBehavior?.SyncFromDocument();
@@ -251,6 +254,22 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         OnPropertyChanged(nameof(IsEditable));
 
         _editorStateBehavior?.UpdateEditorReadOnly();
+    }
+
+    /// <summary>
+    /// 検索条件の変更時に置換開始位置をリセットします。
+    /// </summary>
+    partial void OnSearchTextChanged(string value)
+    {
+        ReplaceNextStartIndex = 0;
+    }
+
+    /// <summary>
+    /// 正規表現モードの変更時に置換開始位置をリセットします。
+    /// </summary>
+    partial void OnIsRegexChanged(bool value)
+    {
+        ReplaceNextStartIndex = 0;
     }
 
     /// <summary>

@@ -531,8 +531,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // Documentを更新し、未保存状態とEditorへの同期、
             // 検索結果の破棄を既存処理へ委譲します。
             documentTab.Document.UpdateContent(result.Content);
-            documentTab.ReplaceNextStartIndex = nextStartIndex;
             documentTab.OnDocumentContentChanged();
+
+            // ドキュメント変更処理によるリセット後に、
+            // 次回の置換開始位置を設定します。
+            documentTab.ReplaceNextStartIndex = nextStartIndex;
 
             RefreshCommandStates();
         }
