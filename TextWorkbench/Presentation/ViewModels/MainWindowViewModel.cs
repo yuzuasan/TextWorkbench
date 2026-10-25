@@ -144,6 +144,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand ReplaceNextCommand { get; }
 
     /// <summary>
+    /// 文書内の一致箇所をすべて置換するコマンドを取得します。
+    /// </summary>
+    public IRelayCommand ReplaceAllCommand { get; }
+
+    /// <summary>
     /// <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="notificationService">通知サービス</param>
@@ -193,6 +198,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
         FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
         ReplaceNextCommand = new RelayCommand(ExecuteReplaceNext, CanExecuteReplaceNext);
+        ReplaceAllCommand = new RelayCommand(ExecuteReplaceAll, CanExecuteReplaceAll);
 
         // 起動直後から編集できるよう、初期Documentを作成してWorkspaceへ追加する。
         var initialDocument = _newDocumentUseCase.Execute();
@@ -549,6 +555,64 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Replace Allを実行できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteReplaceAll() =>
+        !IsProcessing
+        && Workspace.ActiveTab is DocumentTabViewModel documentTab
+        && documentTab.Document.IsEditable;
+
+    /// <summary>
+    /// 文書内の一致箇所をすべて置換し、置換件数を通知します。
+    /// </summary>
+    private void ExecuteReplaceAll()
+    {
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab
+            || !documentTab.Document.IsEditable)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = SearchReplacePanelViewModel.ReplaceAll();
+
+            // 0件の場合も件数を通知しますが、
+            // Documentの内容や未保存状態は変更しません。
+            if (result.ReplacementCount == 0)
+            {
+                _notificationService.ShowInfo("0件置換しました");
+                return;
+            }
+
+            // 置換結果をDocumentへ反映します。
+            documentTab.Document.UpdateContent(result.Content);
+
+            // Replace All後は次回のReplace Nextを文書先頭から開始します。
+            documentTab.ReplaceNextStartIndex = 0;
+
+            // 未保存状態の通知、Editorへの同期、
+            // 古い検索結果の破棄を既存処理へ委譲します。
+            documentTab.OnDocumentContentChanged();
+
+            RefreshCommandStates();
+
+            // 置換件数を通知します。
+            _notificationService.ShowInfo(
+                $"{result.ReplacementCount}件置換しました");
+        }
+        catch (NotSupportedException ex)
+        {
+            // 未対応の正規表現置換など。
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("すべて置換に失敗しました。");
+        }
+    }
+
+    /// <summary>
     /// StatusBar情報を更新します。
     /// </summary>
     private void UpdateStatusBarInfo()
@@ -723,5 +787,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         FindNextCommand.NotifyCanExecuteChanged();
         FindPreviousCommand.NotifyCanExecuteChanged();
         ReplaceNextCommand.NotifyCanExecuteChanged();
+        ReplaceAllCommand.NotifyCanExecuteChanged();
     }
 }
