@@ -225,6 +225,10 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
             OnPropertyChanged(nameof(IsRegex));
             ExecuteSearch();
         }
+        else if (e.PropertyName == nameof(DocumentTabViewModel.ContentVersion))
+        {
+            ExecuteSearch();
+        }
         else if (e.PropertyName == nameof(DocumentTabViewModel.SearchResults))
         {
             OnPropertyChanged(nameof(SearchResults));

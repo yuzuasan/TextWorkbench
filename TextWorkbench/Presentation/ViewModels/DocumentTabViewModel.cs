@@ -90,6 +90,12 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     private int _replaceNextStartIndex = 0;
 
     /// <summary>
+    /// Documentの内容が変更された回数を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private int _contentVersion;
+
+    /// <summary>
     /// <see cref="DocumentTabViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="document">Document</param>
@@ -207,14 +213,16 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         OnPropertyChanged(nameof(IsModified));
         OnPropertyChanged(nameof(IsEditable));
 
-        // 検索結果はDocument.CurrentContentの文字位置を保持するため、
-        // 内容が変更された時点で古い検索結果を破棄します。
+        // 古い検索結果を破棄し、現在の検索位置をリセットします。
         ClearSearchResults();
 
         if (syncFromDocument)
         {
             _documentBehavior?.SyncFromDocument();
         }
+
+        // 検索条件を保持したまま、内容変更を購読側へ通知します。
+        ContentVersion++;
     }
 
     /// <summary>
