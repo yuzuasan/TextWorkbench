@@ -34,7 +34,7 @@ public sealed class TextInfoService : ITextInfoService
         // LineCount計算（LF基準、論理行数）
         var lineCount = CalculateLineCount(content);
 
-        // CharacterCount計算（Unicode code point数）
+        // CharacterCount計算
         var characterCount = CalculateCharacterCount(content);
 
         // ByteCount計算（EncodingとLineEndingを考慮）

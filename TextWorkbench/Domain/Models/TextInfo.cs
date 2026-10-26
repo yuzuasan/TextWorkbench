@@ -13,7 +13,7 @@ public sealed class TextInfo
     public int LineCount { get; }
 
     /// <summary>
-    /// 文字数（Unicode code point数）を取得します。
+    /// 文字数を取得します。
     /// </summary>
     public int CharacterCount { get; }
 
