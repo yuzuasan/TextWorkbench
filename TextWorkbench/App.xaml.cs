@@ -29,6 +29,7 @@ namespace TextWorkbench
             // Applicationサービスを作成
             ISearchService searchService = new SearchService();
             IReplaceService replaceService = new ReplaceService();
+            ITextInfoService textInfoService = new TextInfoService(encodingService, lineEndingService);
 
             // Presentationサービスを作成
             IUserNotificationService notificationService = new MessageBoxNotificationService();
@@ -63,6 +64,7 @@ namespace TextWorkbench
                 saveDocumentAsUseCase);
             var searchTextUseCase = new SearchTextUseCase(searchService);
             var replaceTextUseCase = new ReplaceTextUseCase(replaceService);
+            var getTextInfoUseCase = new GetTextInfoUseCase(textInfoService);
 
             // Workspaceを作成
             var workspace = new Workspace();
@@ -76,6 +78,7 @@ namespace TextWorkbench
                 saveDocumentAsUseCase,
                 closeDocumentUseCase,
                 exitApplicationUseCase,
+                getTextInfoUseCase,
                 searchTextUseCase,
                 replaceTextUseCase,
                 workspace);

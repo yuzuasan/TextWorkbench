@@ -5,6 +5,7 @@ using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
 using TextWorkbench.Presentation.Helpers;
+using TextWorkbench.Presentation.Views;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -20,6 +21,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly SaveDocumentAsUseCase _saveDocumentAsUseCase;
     private readonly CloseDocumentUseCase _closeDocumentUseCase;
     private readonly ExitApplicationUseCase _exitApplicationUseCase;
+    private readonly GetTextInfoUseCase _getTextInfoUseCase;
 
     /// <summary>
     /// StatusBar更新の監視対象となるDocumentTabを取得または設定します。
@@ -124,6 +126,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand CompareCommand { get; }
 
     /// <summary>
+    /// テキスト情報コマンドを取得します。
+    /// </summary>
+    public IRelayCommand TextInfoCommand { get; }
+
+    /// <summary>
     /// 次の検索結果へ移動するコマンドを取得します。
     /// </summary>
     public IRelayCommand FindNextCommand { get; }
@@ -153,6 +160,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="saveDocumentAsUseCase">名前を付けて保存UseCase</param>
     /// <param name="closeDocumentUseCase">Documentを閉じるUseCase</param>
     /// <param name="exitApplicationUseCase">アプリケーション終了UseCase</param>
+    /// <param name="getTextInfoUseCase">テキスト情報取得UseCase</param>
     /// <param name="searchTextUseCase">検索UseCase</param>
     /// <param name="replaceTextUseCase">置換UseCase</param>
     /// <param name="workspace">アプリケーション全体の作業領域</param>
@@ -164,6 +172,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SaveDocumentAsUseCase saveDocumentAsUseCase,
         CloseDocumentUseCase closeDocumentUseCase,
         ExitApplicationUseCase exitApplicationUseCase,
+        GetTextInfoUseCase getTextInfoUseCase,
         SearchTextUseCase searchTextUseCase,
         ReplaceTextUseCase replaceTextUseCase,
         Workspace workspace)
@@ -175,6 +184,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _saveDocumentAsUseCase = saveDocumentAsUseCase ?? throw new ArgumentNullException(nameof(saveDocumentAsUseCase));
         _closeDocumentUseCase = closeDocumentUseCase ?? throw new ArgumentNullException(nameof(closeDocumentUseCase));
         _exitApplicationUseCase = exitApplicationUseCase ?? throw new ArgumentNullException(nameof(exitApplicationUseCase));
+        _getTextInfoUseCase = getTextInfoUseCase ?? throw new ArgumentNullException(nameof(getTextInfoUseCase));
 
         Workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
         SearchReplacePanelViewModel = new SearchReplacePanelViewModel(
@@ -193,6 +203,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
         ReplaceNextCommand = new RelayCommand(ExecuteReplaceNext, CanExecuteReplaceNext);
         ReplaceAllCommand = new RelayCommand(ExecuteReplaceAll, CanExecuteReplaceAll);
+        TextInfoCommand = new RelayCommand(ExecuteTextInfo, CanExecuteTextInfo);
 
         // 起動直後から編集できるよう、初期Documentを作成してWorkspaceへ追加する。
         var initialDocument = _newDocumentUseCase.Execute();
@@ -458,6 +469,36 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanExecuteCompare() => !IsProcessing;
     private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
+
+    private bool CanExecuteTextInfo() =>
+        !IsProcessing && Workspace.ActiveTab is DocumentTabViewModel;
+
+    private void ExecuteTextInfo()
+    {
+        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+            return;
+
+        try
+        {
+            var document = documentTab.Document;
+            var textInfo = _getTextInfoUseCase.Execute(document.CurrentContent, document.Encoding, document.LineEnding);
+
+            var dialog = new TextInfoDialog();
+            var viewModel = dialog.DataContext as TextInfoDialogViewModel;
+            viewModel?.SetTextInfo(textInfo);
+
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+            dialog.ShowDialog();
+        }
+        catch (TextWorkbenchException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("テキスト情報の取得に失敗しました。");
+        }
+    }
 
     private bool CanExecuteFindNext() =>
         Workspace.ActiveTab is DocumentTabViewModel documentTab
