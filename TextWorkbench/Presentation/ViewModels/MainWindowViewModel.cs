@@ -4,7 +4,7 @@ using System.ComponentModel;
 using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
-using TextWorkbench.Domain.Enums;
+using TextWorkbench.Presentation.Helpers;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -628,22 +628,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var document = documentTab.Document;
 
         // Encoding表示
-        StatusEncoding = document.Encoding switch
-        {
-            TextEncoding.Utf8 => "UTF-8",
-            TextEncoding.Utf8Bom => "UTF-8 BOM",
-            TextEncoding.ShiftJis => "Shift-JIS",
-            _ => "Unknown"
-        };
+        StatusEncoding = TextEncodingHelper.ToDisplayString(document.Encoding);
 
         // LineEnding表示
-        StatusLineEnding = document.LineEnding switch
-        {
-            LineEnding.CrLf => "CRLF",
-            LineEnding.Lf => "LF",
-            LineEnding.Cr => "CR",
-            _ => "Unknown"
-        };
+        StatusLineEnding = LineEndingHelper.ToDisplayString(document.LineEnding);
 
         // アクティブなDocumentTabのCaret位置をStatusBarへ表示する。
         StatusCaretPosition = $"行{documentTab.CaretLine}、列{documentTab.CaretColumn}";

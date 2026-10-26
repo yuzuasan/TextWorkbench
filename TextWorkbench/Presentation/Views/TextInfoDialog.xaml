@@ -1,0 +1,48 @@
+<Window x:Class="TextWorkbench.Presentation.Views.TextInfoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:TextWorkbench.Presentation.ViewModels"
+        mc:Ignorable="d"
+        Title="テキスト情報"
+        Width="400"
+        Height="300"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <Window.DataContext>
+        <viewModels:TextInfoDialogViewModel/>
+    </Window.DataContext>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="行数:" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding LineCountText}" Margin="0,0,0,16"/>
+
+            <TextBlock Text="文字数:" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding CharacterCountText}" Margin="0,0,0,16"/>
+
+            <TextBlock Text="バイト数:" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding ByteCountText}" Margin="0,0,0,16"/>
+
+            <TextBlock Text="文字コード:" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding EncodingText}" Margin="0,0,0,16"/>
+
+            <TextBlock Text="改行コード:" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding LineEndingText}" Margin="0,0,0,16"/>
+        </StackPanel>
+
+        <Button Grid.Row="1"
+                Content="OK"
+                Width="80"
+                Height="24"
+                HorizontalAlignment="Right"
+                Margin="0,8,0,0"
+                Command="{Binding OkCommand}"/>
+    </Grid>
+</Window>
