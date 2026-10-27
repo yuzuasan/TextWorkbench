@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
 using TextWorkbench.Domain.Models;
@@ -5,7 +6,7 @@ using TextWorkbench.Domain.Models;
 namespace TextWorkbench.Application.Services;
 
 /// <summary>
-/// 通常の文字列検索を提供します。
+/// テキスト検索を提供します。
 /// </summary>
 public sealed class SearchService : ISearchService
 {
@@ -15,15 +16,23 @@ public sealed class SearchService : ISearchService
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(condition);
 
-        // Step 16では通常検索のみを実装します。
-        // Regex条件の処理は後続ステップで追加します。
-        if (condition.IsRegex)
-            throw new NotSupportedException("正規表現検索は後続ステップで実装します。");
-
         var searchText = condition.SearchText;
         if (searchText.Length == 0 || content.Length == 0)
             return Array.Empty<SearchResult>();
 
+        if (condition.IsRegex)
+        {
+            return SearchWithRegex(content, searchText);
+        }
+
+        return SearchWithString(content, searchText);
+    }
+
+    /// <summary>
+    /// 通常の文字列検索を実行します。
+    /// </summary>
+    private static IReadOnlyList<SearchResult> SearchWithString(string content, string searchText)
+    {
         var results = new List<SearchResult>();
         var searchIndex = 0;
 
@@ -41,6 +50,32 @@ public sealed class SearchService : ISearchService
 
             // 通常検索では一致した文字列の直後から次の検索を続けます。
             searchIndex = matchIndex + searchText.Length;
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 正規表現検索を実行します。
+    /// </summary>
+    private static IReadOnlyList<SearchResult> SearchWithRegex(string content, string pattern)
+    {
+        var results = new List<SearchResult>();
+        var searchIndex = 0;
+
+        // RegexOptions.Multilineを常時有効とする
+        var regex = new Regex(pattern, RegexOptions.Multiline);
+
+        foreach (Match match in regex.Matches(content))
+        {
+            // Zero-length match防止：検索位置を進める
+            if (match.Index < searchIndex)
+                continue;
+
+            results.Add(new SearchResult(match.Index, match.Length));
+
+            // Zero-length matchの場合は1文字進める
+            searchIndex = match.Index + Math.Max(match.Length, 1);
         }
 
         return results;
