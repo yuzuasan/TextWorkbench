@@ -11,18 +11,13 @@ namespace TextWorkbench.Presentation.ViewModels;
 /// <summary>
 /// SearchReplacePanelの表示状態と、アクティブなDocumentTabViewModelの検索状態を仲介します。
 /// </summary>
-public sealed class SearchReplacePanelViewModel : ObservableObject
+public sealed partial class SearchReplacePanelViewModel : ObservableObject
 {
     private readonly SearchTextUseCase _searchTextUseCase;
     private readonly ReplaceTextUseCase _replaceTextUseCase;
     private DocumentTabViewModel? _activeDocumentTab;
     private string _replaceText = string.Empty;
     private bool _isOpen;
-
-    /// <summary>
-    /// 正規表現エラーが発生したときに通知されるイベントです。
-    /// </summary>
-    public event EventHandler<string>? RegexError;
 
     /// <summary>
     /// SearchReplacePanelViewModelの新しいインスタンスを初期化します。
@@ -39,6 +34,7 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
             ?? throw new ArgumentNullException(nameof(replaceTextUseCase));
 
         CloseCommand = new RelayCommand(() => IsOpen = false);
+        ErrorMessage = string.Empty;
     }
 
     /// <summary>
@@ -96,6 +92,22 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
     /// Documentタブがアクティブで、かつパネルが開いている場合に表示します。
     /// </summary>
     public bool IsVisible => IsOpen && ActiveDocumentTab != null;
+
+    /// <summary>
+    /// エラーメッセージを取得または設定します。
+    /// </summary>
+    [ObservableProperty]
+    private string _errorMessage = string.Empty;
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasError));
+    }
+
+    /// <summary>
+    /// エラーがあるかどうかを取得します。
+    /// </summary>
+    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
     /// <summary>
     /// パネルを閉じるコマンドを取得します。
@@ -272,12 +284,13 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
                 _activeDocumentTab.IsRegex);
 
             _activeDocumentTab.SetSearchResults(results);
+            ErrorMessage = string.Empty;
         }
         catch (InvalidRegexException ex)
         {
             // 正規表現が無効な場合は古い結果を残さないようにします。
             _activeDocumentTab.ClearSearchResults();
-            RegexError?.Invoke(this, ex.Message);
+            ErrorMessage = ex.Message;
         }
     }
 }

@@ -191,9 +191,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             searchTextUseCase,
             replaceTextUseCase);
 
-        // SearchReplacePanelViewModelのエラーイベントを購読
-        SearchReplacePanelViewModel.RegexError += OnRegexError;
-
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
         SaveCommand = new RelayCommand(ExecuteSave, CanExecuteSave);
@@ -501,14 +498,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _notificationService.ShowError("テキスト情報の取得に失敗しました。");
         }
-    }
-
-    /// <summary>
-    /// 正規表現エラーが発生したときに呼び出されます。
-    /// </summary>
-    private void OnRegexError(object? sender, string errorMessage)
-    {
-        _notificationService.ShowError(errorMessage);
     }
 
     private bool CanExecuteFindNext() =>
