@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
 
@@ -94,24 +95,31 @@ public sealed class ReplaceService : IReplaceService
         string replacement,
         int startIndex)
     {
-        // RegexOptions.Multilineを常時有効とする
-        var regex = new Regex(pattern, RegexOptions.Multiline);
+        try
+        {
+            // RegexOptions.Multilineを常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline);
 
-        // startIndex以降で最初の一致を検索
-        var match = regex.Match(content, startIndex);
-        if (!match.Success)
-            return CreateNoReplacementResult(content);
+            // startIndex以降で最初の一致を検索
+            var match = regex.Match(content, startIndex);
+            if (!match.Success)
+                return CreateNoReplacementResult(content);
 
-        var replacedContent = content[..match.Index]
-            + match.Result(replacement)
-            + content[(match.Index + match.Length)..];
+            var replacedContent = content[..match.Index]
+                + match.Result(replacement)
+                + content[(match.Index + match.Length)..];
 
-        return new ReplaceResult(
-            replacedContent,
-            replacementCount: 1,
-            firstMatchStartIndex: match.Index,
-            firstMatchLength: match.Length,
-            replacementLength: match.Result(replacement).Length);
+            return new ReplaceResult(
+                replacedContent,
+                replacementCount: 1,
+                firstMatchStartIndex: match.Index,
+                firstMatchLength: match.Length,
+                replacementLength: match.Result(replacement).Length);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidRegexException("正規表現が無効です。", ex);
+        }
     }
 
     /// <summary>
@@ -173,21 +181,28 @@ public sealed class ReplaceService : IReplaceService
         string pattern,
         string replacement)
     {
-        // RegexOptions.Multilineを常時有効とする
-        var regex = new Regex(pattern, RegexOptions.Multiline);
+        try
+        {
+            // RegexOptions.Multilineを常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline);
 
-        var matches = regex.Matches(content);
-        if (matches.Count == 0)
-            return CreateNoReplacementResult(content);
+            var matches = regex.Matches(content);
+            if (matches.Count == 0)
+                return CreateNoReplacementResult(content);
 
-        var replacedContent = regex.Replace(content, replacement);
+            var replacedContent = regex.Replace(content, replacement);
 
-        return new ReplaceResult(
-            replacedContent,
-            replacementCount: matches.Count,
-            firstMatchStartIndex: matches[0].Index,
-            firstMatchLength: matches[0].Length,
-            replacementLength: replacement.Length);
+            return new ReplaceResult(
+                replacedContent,
+                replacementCount: matches.Count,
+                firstMatchStartIndex: matches[0].Index,
+                firstMatchLength: matches[0].Length,
+                replacementLength: replacement.Length);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidRegexException("正規表現が無効です。", ex);
+        }
     }
 
     private static ReplaceResult CreateNoReplacementResult(string content)

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
 using TextWorkbench.Domain.Models;
@@ -63,19 +64,26 @@ public sealed class SearchService : ISearchService
         var results = new List<SearchResult>();
         var searchIndex = 0;
 
-        // RegexOptions.Multilineを常時有効とする
-        var regex = new Regex(pattern, RegexOptions.Multiline);
-
-        foreach (Match match in regex.Matches(content))
+        try
         {
-            // Zero-length match防止：検索位置を進める
-            if (match.Index < searchIndex)
-                continue;
+            // RegexOptions.Multilineを常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline);
 
-            results.Add(new SearchResult(match.Index, match.Length));
+            foreach (Match match in regex.Matches(content))
+            {
+                // Zero-length match防止：検索位置を進める
+                if (match.Index < searchIndex)
+                    continue;
 
-            // Zero-length matchの場合は1文字進める
-            searchIndex = match.Index + Math.Max(match.Length, 1);
+                results.Add(new SearchResult(match.Index, match.Length));
+
+                // Zero-length matchの場合は1文字進める
+                searchIndex = match.Index + Math.Max(match.Length, 1);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidRegexException("正規表現が無効です。", ex);
         }
 
         return results;
