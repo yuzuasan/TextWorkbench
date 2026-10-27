@@ -13,4 +13,14 @@ public abstract class TextWorkbenchException : Exception
         : base(message)
     {
     }
+
+    /// <summary>
+    /// <see cref="TextWorkbenchException"/> の新しいインスタンスを初期化します。
+    /// </summary>
+    /// <param name="message">ユーザー向けメッセージ</param>
+    /// <param name="innerException">内部例外</param>
+    protected TextWorkbenchException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
 }
