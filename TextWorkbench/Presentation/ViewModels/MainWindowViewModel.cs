@@ -191,6 +191,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             searchTextUseCase,
             replaceTextUseCase);
 
+        // SearchReplacePanelViewModelのエラーイベントを購読
+        SearchReplacePanelViewModel.RegexError += OnRegexError;
+
         NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
         SaveCommand = new RelayCommand(ExecuteSave, CanExecuteSave);
@@ -500,6 +503,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 正規表現エラーが発生したときに呼び出されます。
+    /// </summary>
+    private void OnRegexError(object? sender, string errorMessage)
+    {
+        _notificationService.ShowError(errorMessage);
+    }
+
     private bool CanExecuteFindNext() =>
         Workspace.ActiveTab is DocumentTabViewModel documentTab
         && documentTab.SearchResults.Count > 0;
@@ -581,9 +592,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             RefreshCommandStates();
         }
-        catch (NotSupportedException ex)
+        catch (TextWorkbenchException ex)
         {
-            // 未対応の正規表現置換など。
             _notificationService.ShowError(ex.Message);
         }
         catch (Exception)
@@ -640,9 +650,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _notificationService.ShowInfo(
                 $"{result.ReplacementCount}件置換しました");
         }
-        catch (NotSupportedException ex)
+        catch (TextWorkbenchException ex)
         {
-            // 未対応の正規表現置換など。
             _notificationService.ShowError(ex.Message);
         }
         catch (Exception)

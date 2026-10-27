@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Models;
 using TextWorkbench.Application.UseCases;
 using TextWorkbench.Domain.Models;
@@ -17,6 +18,11 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
     private DocumentTabViewModel? _activeDocumentTab;
     private string _replaceText = string.Empty;
     private bool _isOpen;
+
+    /// <summary>
+    /// 正規表現エラーが発生したときに通知されるイベントです。
+    /// </summary>
+    public event EventHandler<string>? RegexError;
 
     /// <summary>
     /// SearchReplacePanelViewModelの新しいインスタンスを初期化します。
@@ -267,10 +273,11 @@ public sealed class SearchReplacePanelViewModel : ObservableObject
 
             _activeDocumentTab.SetSearchResults(results);
         }
-        catch (NotSupportedException)
+        catch (InvalidRegexException ex)
         {
-            // 未対応の検索方法では古い結果を残さないようにします。
+            // 正規表現が無効な場合は古い結果を残さないようにします。
             _activeDocumentTab.ClearSearchResults();
+            RegexError?.Invoke(this, ex.Message);
         }
     }
 }
