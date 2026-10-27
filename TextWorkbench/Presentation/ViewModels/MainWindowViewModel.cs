@@ -530,7 +530,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanExecuteReplaceNext() =>
         !IsProcessing
         && Workspace.ActiveTab is DocumentTabViewModel documentTab
-        && documentTab.Document.IsEditable;
+        && documentTab.Document.IsEditable
+        && documentTab.SearchResults.Count > 0;
 
     /// <summary>
     /// 次の一致箇所を1件置換し、Documentへ反映します。
@@ -597,7 +598,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanExecuteReplaceAll() =>
         !IsProcessing
         && Workspace.ActiveTab is DocumentTabViewModel documentTab
-        && documentTab.Document.IsEditable;
+        && documentTab.Document.IsEditable
+        && documentTab.SearchResults.Count > 0;
 
     /// <summary>
     /// 文書内の一致箇所をすべて置換し、置換件数を通知します。
