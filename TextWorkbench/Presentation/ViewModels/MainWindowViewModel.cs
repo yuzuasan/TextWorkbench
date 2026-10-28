@@ -457,7 +457,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// 検索・置換パネルを開けるかどうかを判定します。
     /// </summary>
-    private bool CanExecuteOpenSearchReplacePanel() => !IsProcessing;
+    private bool CanExecuteOpenSearchReplacePanel() =>
+        !IsProcessing && Workspace.ActiveTab is DocumentTabViewModel;
 
     /// <summary>
     /// 検索・置換パネルを開きます。
@@ -812,5 +813,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         FindPreviousCommand.NotifyCanExecuteChanged();
         ReplaceNextCommand.NotifyCanExecuteChanged();
         ReplaceAllCommand.NotifyCanExecuteChanged();
+        TextInfoCommand.NotifyCanExecuteChanged();
     }
 }
