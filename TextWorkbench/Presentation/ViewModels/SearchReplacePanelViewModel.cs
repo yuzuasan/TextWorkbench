@@ -16,7 +16,6 @@ public sealed partial class SearchReplacePanelViewModel : ObservableObject
     private readonly SearchTextUseCase _searchTextUseCase;
     private readonly ReplaceTextUseCase _replaceTextUseCase;
     private DocumentTabViewModel? _activeDocumentTab;
-    private string _replaceText = string.Empty;
     private bool _isOpen;
 
     /// <summary>
@@ -67,6 +66,7 @@ public sealed partial class SearchReplacePanelViewModel : ObservableObject
             OnPropertyChanged(nameof(ActiveDocumentTab));
             OnPropertyChanged(nameof(SearchText));
             OnPropertyChanged(nameof(IsRegex));
+            OnPropertyChanged(nameof(ReplaceText));
             OnPropertyChanged(nameof(SearchResults));
             OnPropertyChanged(nameof(CurrentSearchIndex));
             OnPropertyChanged(nameof(IsVisible));
@@ -161,8 +161,20 @@ public sealed partial class SearchReplacePanelViewModel : ObservableObject
     /// </summary>
     public string ReplaceText
     {
-        get => _replaceText;
-        set => SetProperty(ref _replaceText, value ?? string.Empty);
+        get => _activeDocumentTab?.ReplaceText ?? string.Empty;
+        set
+        {
+            var replaceText = value ?? string.Empty;
+
+            if (_activeDocumentTab == null
+                || _activeDocumentTab.ReplaceText == replaceText)
+            {
+                return;
+            }
+
+            _activeDocumentTab.ReplaceText = replaceText;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>
@@ -242,6 +254,10 @@ public sealed partial class SearchReplacePanelViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(IsRegex));
             ExecuteSearch();
+        }
+        else if (e.PropertyName == nameof(DocumentTabViewModel.ReplaceText))
+        {
+            OnPropertyChanged(nameof(ReplaceText));
         }
         else if (e.PropertyName == nameof(DocumentTabViewModel.ContentVersion))
         {

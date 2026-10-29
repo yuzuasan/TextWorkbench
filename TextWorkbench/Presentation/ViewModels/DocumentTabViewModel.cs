@@ -72,6 +72,12 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     private bool _isRegex;
 
     /// <summary>
+    /// 置換後の文字列を取得または設定します。
+    /// </summary>
+    [ObservableProperty]
+    private string _replaceText = string.Empty;
+
+    /// <summary>
     /// 検索結果一覧を取得または設定します。
     /// </summary>
     [ObservableProperty]
