@@ -149,8 +149,8 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     {
         ArgumentNullException.ThrowIfNull(results);
 
-        SearchResults = results;
         CurrentSearchIndex = -1;
+        SearchResults = results;
     }
 
     /// <summary>
