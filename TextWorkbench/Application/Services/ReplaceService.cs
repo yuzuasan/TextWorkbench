@@ -97,8 +97,8 @@ public sealed class ReplaceService : IReplaceService
     {
         try
         {
-            // RegexOptions.Multilineを常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline);
+            // 複数行モードと大文字小文字を区別しない検索を常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
             // startIndex以降で最初の一致を検索
             var match = regex.Match(content, startIndex);
@@ -183,8 +183,8 @@ public sealed class ReplaceService : IReplaceService
     {
         try
         {
-            // RegexOptions.Multilineを常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline);
+            // 複数行モードと大文字小文字を区別しない検索を常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
             var matches = regex.Matches(content);
             if (matches.Count == 0)

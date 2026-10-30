@@ -66,8 +66,8 @@ public sealed class SearchService : ISearchService
 
         try
         {
-            // RegexOptions.Multilineを常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline);
+            // 複数行モードと大文字小文字を区別しない検索を常時有効とする
+            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
             foreach (Match match in regex.Matches(content))
             {
