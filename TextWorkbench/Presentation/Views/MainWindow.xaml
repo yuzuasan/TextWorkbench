@@ -147,29 +147,62 @@
 
         <!-- StatusBar -->
         <StatusBar Grid.Row="4">
+
+            <!-- Document用StatusBar -->
             <StatusBarItem>
-                <TextBlock Text="{Binding StatusEncoding}"/>
+                <StatusBarItem.Style>
+                    <Style TargetType="StatusBarItem">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDocumentStatusVisible}"
+                                         Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StatusBarItem.Style>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding DocumentStatusEncoding}"/>
+                    <Separator Margin="8,0"/>
+
+                    <TextBlock Text="{Binding DocumentStatusLineEnding}"/>
+                    <Separator Margin="8,0"/>
+
+                    <TextBlock Text="{Binding DocumentStatusCaretPosition}"/>
+                    <Separator Margin="8,0"/>
+
+                    <TextBlock Text="{Binding DocumentStatusModificationState}"/>
+                    <Separator Margin="8,0"/>
+
+                    <TextBlock Text="{Binding DocumentStatusReadOnlyState}"/>
+                    <Separator Margin="8,0"/>
+
+                    <TextBlock Text="{Binding DocumentStatusProcessingState}"/>
+                </StackPanel>
             </StatusBarItem>
-            <Separator/>
+
+            <!-- Diff用StatusBar -->
             <StatusBarItem>
-                <TextBlock Text="{Binding StatusLineEnding}"/>
+                <StatusBarItem.Style>
+                    <Style TargetType="StatusBarItem">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDiffStatusVisible}"
+                                         Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StatusBarItem.Style>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding DiffStatusComparisonText}"/>
+                    <Separator Margin="8,0"/>
+                    <TextBlock Text="{Binding DiffStatusPositionText}"/>
+                </StackPanel>
             </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusCaretPosition}"/>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusModificationState}"/>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusReadOnlyState}"/>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusProcessingState}"/>
-            </StatusBarItem>
+
         </StatusBar>
     </Grid>
 </Window>

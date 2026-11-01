@@ -28,9 +28,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly CompareDocumentsUseCase _compareDocumentsUseCase;
 
     /// <summary>
-    /// StatusBar更新の監視対象となるDocumentTabを取得または設定します。
+    /// StatusBar更新の監視対象となるTabを取得または設定します。
     /// </summary>
-    private DocumentTabViewModel? _observedStatusTab;
+    private TabViewModel? _observedStatusTab;
 
     /// <summary>
     /// Workspaceを取得します。
@@ -54,40 +54,64 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool _isProcessing;
 
     /// <summary>
-    /// StatusBarのEncoding表示を取得します。
+    /// Document用StatusBarの表示状態を取得します。
     /// </summary>
-    [ObservableProperty]
-    private string _statusEncoding = string.Empty;
+    public bool IsDocumentStatusVisible =>
+        Workspace.ActiveTab is DocumentTabViewModel;
 
     /// <summary>
-    /// StatusBarのLineEnding表示を取得します。
+    /// Diff用StatusBarの表示状態を取得します。
     /// </summary>
-    [ObservableProperty]
-    private string _statusLineEnding = string.Empty;
+    public bool IsDiffStatusVisible =>
+        Workspace.ActiveTab is DiffTabViewModel;
 
     /// <summary>
-    /// StatusBarのCaret位置表示を取得します。
+    /// DocumentのEncoding表示を取得します。
     /// </summary>
     [ObservableProperty]
-    private string _statusCaretPosition = string.Empty;
+    private string _documentStatusEncoding = string.Empty;
 
     /// <summary>
-    /// StatusBarの変更状態表示を取得します。
+    /// DocumentのLineEnding表示を取得します。
     /// </summary>
     [ObservableProperty]
-    private string _statusModificationState = string.Empty;
+    private string _documentStatusLineEnding = string.Empty;
 
     /// <summary>
-    /// StatusBarの読み取り専用状態表示を取得します。
+    /// DocumentのCaret位置表示を取得します。
     /// </summary>
     [ObservableProperty]
-    private string _statusReadOnlyState = string.Empty;
+    private string _documentStatusCaretPosition = string.Empty;
 
     /// <summary>
-    /// StatusBarの処理中状態表示を取得します。
+    /// Documentの変更状態表示を取得します。
     /// </summary>
     [ObservableProperty]
-    private string _statusProcessingState = string.Empty;
+    private string _documentStatusModificationState = string.Empty;
+
+    /// <summary>
+    /// Documentの読み取り専用状態表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _documentStatusReadOnlyState = string.Empty;
+
+    /// <summary>
+    /// Documentの処理中状態表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _documentStatusProcessingState = string.Empty;
+
+    /// <summary>
+    /// Diffの比較対象表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _diffStatusComparisonText = string.Empty;
+
+    /// <summary>
+    /// Diffの現在位置表示を取得します。
+    /// </summary>
+    [ObservableProperty]
+    private string _diffStatusPositionText = string.Empty;
 
     /// <summary>
     /// 新規作成コマンドを取得します。
@@ -736,80 +760,91 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var rightSource = diffTab.DiffSession.RightSource;
 
             // 比較対象と文字コード
-            StatusEncoding =
+            DiffStatusComparisonText =
                 $"比較: {leftSource.DisplayName} " +
                 $"({TextEncodingHelper.ToDisplayString(leftSource.Encoding)}) " +
                 $"↔ {rightSource.DisplayName} " +
                 $"({TextEncodingHelper.ToDisplayString(rightSource.Encoding)})";
 
-            StatusLineEnding = string.Empty;
+            DiffStatusPositionText = diffTab.CurrentDiffIndex < 0
+                ? $"差分 {diffTab.DiffCount}件"
+                : $"差分 {diffTab.CurrentDiffIndex + 1} / {diffTab.DiffCount}";
 
-            // 現在の差分は未選択のため、差分数を表示
-            StatusCaretPosition = $"差分 {diffTab.DiffCount}件";
-
-            StatusModificationState = string.Empty;
-            StatusReadOnlyState = string.Empty;
-            StatusProcessingState = string.Empty;
-
+            ClearDocumentStatus();
             return;
         }
 
         // DocumentTab以外の場合はクリア
         if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
         {
-            StatusEncoding = string.Empty;
-            StatusLineEnding = string.Empty;
-            StatusCaretPosition = string.Empty;
-            StatusModificationState = string.Empty;
-            StatusReadOnlyState = string.Empty;
-            StatusProcessingState = string.Empty;
-
+            ClearDocumentStatus();
+            ClearDiffStatus();
             return;
         }
 
         var document = documentTab.Document;
 
         // Encoding表示
-        StatusEncoding = TextEncodingHelper.ToDisplayString(document.Encoding);
+        DocumentStatusEncoding = TextEncodingHelper.ToDisplayString(document.Encoding);
 
         // LineEnding表示
-        StatusLineEnding = LineEndingHelper.ToDisplayString(document.LineEnding);
+        DocumentStatusLineEnding = LineEndingHelper.ToDisplayString(document.LineEnding);
 
         // Caret位置表示
-        StatusCaretPosition = $"行{documentTab.CaretLine}、列{documentTab.CaretColumn}";
+        DocumentStatusCaretPosition = $"行{documentTab.CaretLine}、列{documentTab.CaretColumn}";
 
         // 変更状態表示
         if (document.IsLoading || document.IsSaving)
         {
-            StatusModificationState = string.Empty;
-        }
-        else if (document.IsModified)
-        {
-            StatusModificationState = "変更あり";
+            DocumentStatusModificationState = string.Empty;
         }
         else
         {
-            StatusModificationState = string.Empty;
+            DocumentStatusModificationState =
+                document.IsModified ? "変更あり" : string.Empty;
         }
 
         // 読み取り専用表示
-        StatusReadOnlyState = document.IsReadOnly
-            ? "読み取り専用"
-            : string.Empty;
+        DocumentStatusReadOnlyState =
+            document.IsReadOnly ? "読み取り専用" : string.Empty;
 
         // 処理中表示
         if (document.IsLoading)
         {
-            StatusProcessingState = "読み込み中...";
+            DocumentStatusProcessingState = "読み込み中...";
         }
         else if (document.IsSaving)
         {
-            StatusProcessingState = "保存中...";
+            DocumentStatusProcessingState = "保存中...";
         }
         else
         {
-            StatusProcessingState = string.Empty;
+            DocumentStatusProcessingState = string.Empty;
         }
+
+        ClearDiffStatus();
+    }
+
+    /// <summary>
+    /// Document用StatusBar情報をクリアします。
+    /// </summary>
+    private void ClearDocumentStatus()
+    {
+        DocumentStatusEncoding = string.Empty;
+        DocumentStatusLineEnding = string.Empty;
+        DocumentStatusCaretPosition = string.Empty;
+        DocumentStatusModificationState = string.Empty;
+        DocumentStatusReadOnlyState = string.Empty;
+        DocumentStatusProcessingState = string.Empty;
+    }
+
+    /// <summary>
+    /// Diff用StatusBar情報をクリアします。
+    /// </summary>
+    private void ClearDiffStatus()
+    {
+        DiffStatusComparisonText = string.Empty;
+        DiffStatusPositionText = string.Empty;
     }
 
     /// <summary>
@@ -838,6 +873,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         SearchReplacePanelViewModel.ActiveDocumentTab = Workspace.ActiveTab as DocumentTabViewModel;
         ObserveActiveTabForStatusBar();
+        OnPropertyChanged(nameof(IsDocumentStatusVisible));
+        OnPropertyChanged(nameof(IsDiffStatusVisible));
         UpdateStatusBarInfo();
         RefreshCommandStates();
     }
@@ -853,7 +890,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _observedStatusTab.PropertyChanged -= OnActiveTabPropertyChanged;
         }
 
-        _observedStatusTab = Workspace.ActiveTab as DocumentTabViewModel;
+        _observedStatusTab = Workspace.ActiveTab;
 
         if (_observedStatusTab != null)
         {
@@ -862,32 +899,46 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// アクティブなDocumentTabの状態変更を処理します。
+    /// アクティブTabの状態変更を処理します。
     /// </summary>
-    private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnActiveTabPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(DocumentTabViewModel.SearchResults))
+        if (sender is DocumentTabViewModel)
         {
-            RefreshCommandStates();
-            return;
-        }
+            if (e.PropertyName == nameof(DocumentTabViewModel.SearchResults))
+            {
+                RefreshCommandStates();
+                return;
+            }
 
-        // Caret位置が変わった場合もStatusBarを更新する。
-        if (e.PropertyName is nameof(DocumentTabViewModel.CaretLine)
-            or nameof(DocumentTabViewModel.CaretColumn))
-        {
-            UpdateStatusBarInfo();
-            return;
-        }
+            // Caret位置変更
+            if (e.PropertyName is nameof(DocumentTabViewModel.CaretLine)
+                or nameof(DocumentTabViewModel.CaretColumn))
+            {
+                UpdateStatusBarInfo();
+                return;
+            }
 
-        if (e.PropertyName is nameof(DocumentTabViewModel.IsModified)
-            or nameof(DocumentTabViewModel.IsReadOnly)
-            or nameof(DocumentTabViewModel.IsLoading)
-            or nameof(DocumentTabViewModel.IsSaving)
-            or nameof(DocumentTabViewModel.IsEditable))
+            // Document状態変更
+            if (e.PropertyName is nameof(DocumentTabViewModel.IsModified)
+                or nameof(DocumentTabViewModel.IsReadOnly)
+                or nameof(DocumentTabViewModel.IsLoading)
+                or nameof(DocumentTabViewModel.IsSaving)
+                or nameof(DocumentTabViewModel.IsEditable))
+            {
+                UpdateStatusBarInfo();
+                RefreshCommandStates();
+            }
+        }
+        else if (sender is DiffTabViewModel)
         {
-            UpdateStatusBarInfo();
-            RefreshCommandStates();
+            // 現在の差分位置が変わった場合
+            if (e.PropertyName == nameof(DiffTabViewModel.CurrentDiffIndex))
+            {
+                UpdateStatusBarInfo();
+            }
         }
     }
 
