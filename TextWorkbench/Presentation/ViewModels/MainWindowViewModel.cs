@@ -4,6 +4,8 @@ using System.ComponentModel;
 using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.UseCases;
+using TextWorkbench.Domain.Enums;
+using TextWorkbench.Domain.Models;
 using TextWorkbench.Presentation.Helpers;
 using TextWorkbench.Presentation.Views;
 
@@ -15,6 +17,7 @@ namespace TextWorkbench.Presentation.ViewModels;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly IUserNotificationService _notificationService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly NewDocumentUseCase _newDocumentUseCase;
     private readonly OpenDocumentUseCase _openDocumentUseCase;
     private readonly SaveDocumentUseCase _saveDocumentUseCase;
@@ -22,6 +25,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly CloseDocumentUseCase _closeDocumentUseCase;
     private readonly ExitApplicationUseCase _exitApplicationUseCase;
     private readonly GetTextInfoUseCase _getTextInfoUseCase;
+    private readonly CompareDocumentsUseCase _compareDocumentsUseCase;
 
     /// <summary>
     /// StatusBar更新の監視対象となるDocumentTabを取得または設定します。
@@ -154,6 +158,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     /// <param name="notificationService">通知サービス</param>
+    /// <param name="fileDialogService">ファイルダイアログサービス</param>
     /// <param name="newDocumentUseCase">新規Document作成UseCase</param>
     /// <param name="openDocumentUseCase">ファイルを開くUseCase</param>
     /// <param name="saveDocumentUseCase">Document保存UseCase</param>
@@ -163,9 +168,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="getTextInfoUseCase">テキスト情報取得UseCase</param>
     /// <param name="searchTextUseCase">検索UseCase</param>
     /// <param name="replaceTextUseCase">置換UseCase</param>
+    /// <param name="compareDocumentsUseCase">ファイル比較UseCase</param>
     /// <param name="workspace">アプリケーション全体の作業領域</param>
     public MainWindowViewModel(
         IUserNotificationService notificationService,
+        IFileDialogService fileDialogService,
         NewDocumentUseCase newDocumentUseCase,
         OpenDocumentUseCase openDocumentUseCase,
         SaveDocumentUseCase saveDocumentUseCase,
@@ -175,9 +182,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         GetTextInfoUseCase getTextInfoUseCase,
         SearchTextUseCase searchTextUseCase,
         ReplaceTextUseCase replaceTextUseCase,
+        CompareDocumentsUseCase compareDocumentsUseCase,
         Workspace workspace)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
         _newDocumentUseCase = newDocumentUseCase ?? throw new ArgumentNullException(nameof(newDocumentUseCase));
         _openDocumentUseCase = openDocumentUseCase ?? throw new ArgumentNullException(nameof(openDocumentUseCase));
         _saveDocumentUseCase = saveDocumentUseCase ?? throw new ArgumentNullException(nameof(saveDocumentUseCase));
@@ -185,6 +194,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _closeDocumentUseCase = closeDocumentUseCase ?? throw new ArgumentNullException(nameof(closeDocumentUseCase));
         _exitApplicationUseCase = exitApplicationUseCase ?? throw new ArgumentNullException(nameof(exitApplicationUseCase));
         _getTextInfoUseCase = getTextInfoUseCase ?? throw new ArgumentNullException(nameof(getTextInfoUseCase));
+        _compareDocumentsUseCase = compareDocumentsUseCase ?? throw new ArgumentNullException(nameof(compareDocumentsUseCase));
 
         Workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
         SearchReplacePanelViewModel = new SearchReplacePanelViewModel(
@@ -468,9 +478,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OpenSearchReplacePanel();
     }
 
-    private bool CanExecuteCompare() => !IsProcessing;
-    private void ExecuteCompare() => _notificationService.ShowInfo("比較（仮実装）");
-
     private bool CanExecuteTextInfo() =>
         !IsProcessing && Workspace.ActiveTab is DocumentTabViewModel;
 
@@ -651,19 +658,112 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// ファイル比較を実行できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteCompare() => !IsProcessing;
+
+    /// <summary>
+    /// 2つのファイルを選択して比較し、DiffTabをWorkspaceへ追加します。
+    /// </summary>
+    private void ExecuteCompare()
+    {
+        try
+        {
+            IsProcessing = true;
+            RefreshCommandStates();
+
+            // 左側の比較対象ファイルを選択
+            var leftFilePath = _fileDialogService.ShowOpenFileDialog();
+
+            if (string.IsNullOrWhiteSpace(leftFilePath))
+            {
+                return;
+            }
+
+            // 右側の比較対象ファイルを選択
+            var rightFilePath = _fileDialogService.ShowOpenFileDialog();
+
+            if (string.IsNullOrWhiteSpace(rightFilePath))
+            {
+                return;
+            }
+
+            // 比較元を生成
+            var leftSource = new ComparisonSource(
+                SourceType.File,
+                leftFilePath);
+
+            var rightSource = new ComparisonSource(
+                SourceType.File,
+                rightFilePath);
+
+            // 保存済みファイルを比較
+            var diffSession = _compareDocumentsUseCase.Execute(
+                leftSource,
+                rightSource);
+
+            // 比較成功後にDiffTabを生成
+            var diffTab = new DiffTabViewModel(diffSession);
+
+            // Workspaceへ追加するとActiveTabも自動的に切り替わる
+            Workspace.AddTab(diffTab);
+        }
+        catch (TextWorkbenchException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("ファイルの比較に失敗しました。");
+        }
+        finally
+        {
+            IsProcessing = false;
+
+            RefreshCommandStates();
+        }
+    }
+
+    /// <summary>
     /// StatusBar情報を更新します。
     /// </summary>
     private void UpdateStatusBarInfo()
     {
+        // DiffTabがアクティブな場合
+        if (Workspace.ActiveTab is DiffTabViewModel diffTab)
+        {
+            var leftSource = diffTab.DiffSession.LeftSource;
+            var rightSource = diffTab.DiffSession.RightSource;
+
+            // 比較対象と文字コード
+            StatusEncoding =
+                $"比較: {leftSource.DisplayName} " +
+                $"({TextEncodingHelper.ToDisplayString(leftSource.Encoding)}) " +
+                $"↔ {rightSource.DisplayName} " +
+                $"({TextEncodingHelper.ToDisplayString(rightSource.Encoding)})";
+
+            StatusLineEnding = string.Empty;
+
+            // 現在の差分は未選択のため、差分数を表示
+            StatusCaretPosition = $"差分 {diffTab.DiffCount}件";
+
+            StatusModificationState = string.Empty;
+            StatusReadOnlyState = string.Empty;
+            StatusProcessingState = string.Empty;
+
+            return;
+        }
+
+        // DocumentTab以外の場合はクリア
         if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
         {
-            // DocumentTabでない場合はクリア
             StatusEncoding = string.Empty;
             StatusLineEnding = string.Empty;
             StatusCaretPosition = string.Empty;
             StatusModificationState = string.Empty;
             StatusReadOnlyState = string.Empty;
             StatusProcessingState = string.Empty;
+
             return;
         }
 
@@ -675,7 +775,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // LineEnding表示
         StatusLineEnding = LineEndingHelper.ToDisplayString(document.LineEnding);
 
-        // アクティブなDocumentTabのCaret位置をStatusBarへ表示する。
+        // Caret位置表示
         StatusCaretPosition = $"行{documentTab.CaretLine}、列{documentTab.CaretColumn}";
 
         // 変更状態表示
@@ -693,14 +793,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         // 読み取り専用表示
-        if (document.IsReadOnly)
-        {
-            StatusReadOnlyState = "読み取り専用";
-        }
-        else
-        {
-            StatusReadOnlyState = string.Empty;
-        }
+        StatusReadOnlyState = document.IsReadOnly
+            ? "読み取り専用"
+            : string.Empty;
 
         // 処理中表示
         if (document.IsLoading)

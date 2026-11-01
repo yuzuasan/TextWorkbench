@@ -2,6 +2,7 @@
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Services;
 using TextWorkbench.Application.UseCases;
+using TextWorkbench.Infrastructure.Diff;
 using TextWorkbench.Infrastructure.Encoding;
 using TextWorkbench.Infrastructure.File;
 using TextWorkbench.Infrastructure.LineEnding;
@@ -26,10 +27,14 @@ namespace TextWorkbench
             IEncodingService encodingService = new EncodingService();
             ILineEndingService lineEndingService = new LineEndingService();
 
+            // DiffエンジンAdapterを作成
+            IDiffEngineAdapter diffEngineAdapter = new DiffPlexAdapter();
+
             // Applicationサービスを作成
             ISearchService searchService = new SearchService();
             IReplaceService replaceService = new ReplaceService();
             ITextInfoService textInfoService = new TextInfoService(encodingService, lineEndingService);
+            IDiffService diffService = new DiffService(diffEngineAdapter);
 
             // Presentationサービスを作成
             IUserNotificationService notificationService = new MessageBoxNotificationService();
@@ -65,6 +70,12 @@ namespace TextWorkbench
             var searchTextUseCase = new SearchTextUseCase(searchService);
             var replaceTextUseCase = new ReplaceTextUseCase(replaceService);
             var getTextInfoUseCase = new GetTextInfoUseCase(textInfoService);
+            var compareDocumentsUseCase =
+                new CompareDocumentsUseCase(
+                    fileService,
+                    encodingService,
+                    lineEndingService,
+                    diffService);
 
             // Workspaceを作成
             var workspace = new Workspace();
@@ -72,6 +83,7 @@ namespace TextWorkbench
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(
                 notificationService,
+                fileDialogService,
                 newDocumentUseCase,
                 openDocumentUseCase,
                 saveDocumentUseCase,
@@ -81,6 +93,7 @@ namespace TextWorkbench
                 getTextInfoUseCase,
                 searchTextUseCase,
                 replaceTextUseCase,
+                compareDocumentsUseCase,
                 workspace);
 
             // MainWindowを作成
