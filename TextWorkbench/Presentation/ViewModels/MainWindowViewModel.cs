@@ -398,51 +398,74 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanExecuteClose()
     {
-        // 処理中、または閉じる対象のDocumentTabがない場合は実行できない。
-        if (IsProcessing || Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        // 処理中、または閉じる対象のTabがない場合は実行できない。
+        if (IsProcessing || Workspace.ActiveTab == null)
         {
             return false;
         }
 
-        // 読み込み中・保存中のDocumentは閉じない。
-        return !documentTab.Document.IsLoading
-            && !documentTab.Document.IsSaving;
+        // DiffTabは常に閉じ可能
+        if (Workspace.ActiveTab is DiffTabViewModel)
+        {
+            return true;
+        }
+
+        // DocumentTabの場合は読み込み中・保存中でない場合のみ閉じ可能
+        if (Workspace.ActiveTab is DocumentTabViewModel documentTab)
+        {
+            return !documentTab.Document.IsLoading
+                && !documentTab.Document.IsSaving;
+        }
+
+        return false;
     }
 
     /// <summary>
-    /// アクティブなDocumentTabを閉じます。
+    /// アクティブなTabを閉じます。
     /// </summary>
     private void ExecuteClose()
     {
-        if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+        if (Workspace.ActiveTab == null)
         {
             return;
         }
 
-        try
+        // DiffTabは保存確認なしで閉じる
+        if (Workspace.ActiveTab is DiffTabViewModel diffTab)
         {
-            // 保存確認と保存処理を行い、閉じてよい場合のみタブを削除する。
-            if (!_closeDocumentUseCase.Execute(documentTab, Workspace))
-            {
-                return;
-            }
-
-            // タブの追加・削除はWorkspaceを通して行う。
-            Workspace.RemoveTab(documentTab);
-        }
-        catch (TextWorkbenchException ex)
-        {
-            _notificationService.ShowError(ex.Message);
-        }
-        catch (Exception)
-        {
-            // 保存失敗などの場合はタブを残してエラーを通知する。
-            _notificationService.ShowError("閉じることに失敗しました。");
-        }
-        finally
-        {
-            // タブの選択状態が変わるため、各コマンドの実行可否を更新する。
+            Workspace.RemoveTab(diffTab);
             RefreshCommandStates();
+            return;
+        }
+
+        // DocumentTabは保存確認を行う
+        if (Workspace.ActiveTab is DocumentTabViewModel documentTab)
+        {
+            try
+            {
+                // 保存確認と保存処理を行い、閉じてよい場合のみタブを削除する。
+                if (!_closeDocumentUseCase.Execute(documentTab, Workspace))
+                {
+                    return;
+                }
+
+                // タブの追加・削除はWorkspaceを通して行う。
+                Workspace.RemoveTab(documentTab);
+            }
+            catch (TextWorkbenchException ex)
+            {
+                _notificationService.ShowError(ex.Message);
+            }
+            catch (Exception)
+            {
+                // 保存失敗などの場合はタブを残してエラーを通知する。
+                _notificationService.ShowError("閉じることに失敗しました。");
+            }
+            finally
+            {
+                // タブの選択状態が変わるため、各コマンドの実行可否を更新する。
+                RefreshCommandStates();
+            }
         }
     }
 
