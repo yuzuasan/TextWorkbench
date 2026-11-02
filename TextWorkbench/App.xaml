@@ -4,6 +4,16 @@
              xmlns:local="clr-namespace:TextWorkbench"
              Startup="OnStartup">
     <Application.Resources>
-
+        <!-- DiffViewの配色はResourceとして一元管理する -->
+        <SolidColorBrush x:Key="DiffViewerHeaderBackgroundBrush" Color="#FFF3F4F6"/>
+        <SolidColorBrush x:Key="DiffViewerHeaderBorderBrush" Color="#FFD1D5DB"/>
+        <SolidColorBrush x:Key="DiffLineNumberForegroundBrush" Color="#FF808080"/>
+        <SolidColorBrush x:Key="DiffChangeTypeForegroundBrush" Color="#FF808080"/>
+        <SolidColorBrush x:Key="DiffAddedBackgroundBrush" Color="#4034A853"/>
+        <SolidColorBrush x:Key="DiffDeletedBackgroundBrush" Color="#40D9534F"/>
+        <SolidColorBrush x:Key="DiffUnchangedBackgroundBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="DiffImaginaryBackgroundBrush" Color="#18808080"/>
+        <SolidColorBrush x:Key="DiffSplitterBackgroundBrush" Color="#40808080"/>
+        <SolidColorBrush x:Key="DiffSplitterBorderBrush" Color="#40808080"/>
     </Application.Resources>
 </Application>
