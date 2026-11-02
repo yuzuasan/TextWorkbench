@@ -18,7 +18,7 @@ public sealed partial class DiffTabViewModel : TabViewModel
     /// 現在の差分インデックスを取得または設定します。
     /// </summary>
     [ObservableProperty]
-    private int _currentDiffIndex = -1;
+    public int _currentDiffIndex = -1;
 
     /// <summary>
     /// 差分数を取得します。

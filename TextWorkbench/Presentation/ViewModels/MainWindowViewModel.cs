@@ -154,6 +154,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand CompareCommand { get; }
 
     /// <summary>
+    /// 次の差分コマンドを取得します。
+    /// </summary>
+    public IRelayCommand NextDiffCommand { get; }
+
+    /// <summary>
+    /// 前の差分コマンドを取得します。
+    /// </summary>
+    public IRelayCommand PreviousDiffCommand { get; }
+
+    /// <summary>
     /// テキスト情報コマンドを取得します。
     /// </summary>
     public IRelayCommand TextInfoCommand { get; }
@@ -233,6 +243,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ExitCommand = new RelayCommand(ExecuteExit, CanExecuteExit);
         OpenSearchReplacePanelCommand = new RelayCommand(ExecuteOpenSearchReplacePanel, CanExecuteOpenSearchReplacePanel);
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
+        NextDiffCommand = new RelayCommand(ExecuteNextDiff, CanExecuteNextDiff);
+        PreviousDiffCommand = new RelayCommand(ExecutePreviousDiff, CanExecutePreviousDiff);
         FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
         FindPreviousCommand = new RelayCommand(ExecuteFindPrevious, CanExecuteFindPrevious);
         ReplaceNextCommand = new RelayCommand(ExecuteReplaceNext, CanExecuteReplaceNext);
@@ -772,6 +784,52 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 次の差分に移動できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteNextDiff()
+    {
+        return !IsProcessing
+            && Workspace.ActiveTab is DiffTabViewModel diffTab
+            && diffTab.DiffCount > 0
+            && diffTab.CurrentDiffIndex < diffTab.DiffCount - 1; 
+    }
+
+    /// <summary>
+    /// 次の差分に移動します。
+    /// </summary>
+    private void ExecuteNextDiff()
+    {
+        if (Workspace.ActiveTab is DiffTabViewModel diffTab)
+        {
+            diffTab.NextDiff();
+            RefreshCommandStates();
+        }
+    }
+
+    /// <summary>
+    /// 前の差分に移動できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecutePreviousDiff()
+    {
+        return !IsProcessing
+            && Workspace.ActiveTab is DiffTabViewModel diffTab
+            && diffTab.DiffCount > 0
+            && diffTab.CurrentDiffIndex > 0;
+    }
+
+    /// <summary>
+    /// 前の差分に移動します。
+    /// </summary>
+    private void ExecutePreviousDiff()
+    {
+        if (Workspace.ActiveTab is DiffTabViewModel diffTab)
+        {
+            diffTab.PreviousDiff();
+            RefreshCommandStates();
+        }
+    }
+
+    /// <summary>
     /// StatusBar情報を更新します。
     /// </summary>
     private void UpdateStatusBarInfo()
@@ -978,6 +1036,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ExitCommand.NotifyCanExecuteChanged();
         OpenSearchReplacePanelCommand.NotifyCanExecuteChanged();
         CompareCommand.NotifyCanExecuteChanged();
+        NextDiffCommand.NotifyCanExecuteChanged();
+        PreviousDiffCommand.NotifyCanExecuteChanged();
         FindNextCommand.NotifyCanExecuteChanged();
         FindPreviousCommand.NotifyCanExecuteChanged();
         ReplaceNextCommand.NotifyCanExecuteChanged();
