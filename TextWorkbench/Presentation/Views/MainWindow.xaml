@@ -48,22 +48,25 @@
                 <MenuItem Header="すべて選択(_A)" Command="SelectAll"/>
             </MenuItem>
             <MenuItem Header="比較(_C)">
-                <MenuItem Header="ファイルを比較(_C)" Command="{Binding CompareCommand}"/>
+                <MenuItem Header="ドキュメントを比較(_C)" Command="{Binding CompareCommand}"/>
+                <Separator/>
+                <MenuItem Header="次の差分(_N)" Command="{Binding NextDiffCommand}"/>
+                <MenuItem Header="前の差分(_P)" Command="{Binding PreviousDiffCommand}"/>
             </MenuItem>
         </Menu>
 
         <!-- QuickActions -->
         <ToolBar Grid.Row="1" Padding="4">
-            <Button Command="{Binding NewCommand}" ToolTip="新規作成">
+            <Button Command="{Binding NewCommand}" ToolTip="ドキュメントを新規作成">
                 <TextBlock Text="新規"/>
             </Button>
-            <Button Command="{Binding OpenCommand}" ToolTip="開く">
+            <Button Command="{Binding OpenCommand}" ToolTip="ドキュメントを開く">
                 <TextBlock Text="開く"/>
             </Button>
-            <Button Command="{Binding SaveCommand}" ToolTip="保存">
+            <Button Command="{Binding SaveCommand}" ToolTip="ドキュメントを保存">
                 <TextBlock Text="保存"/>
             </Button>
-            <Button Command="{Binding SaveAsCommand}" ToolTip="名前を付けて保存">
+            <Button Command="{Binding SaveAsCommand}" ToolTip="ドキュメントを名前を付けて保存">
                 <TextBlock Text="名前を付けて保存"/>
             </Button>
             <Separator/>
@@ -72,8 +75,16 @@
                 <TextBlock Text="検索・置換"/>
             </Button>
             <Separator/>
-            <Button Command="{Binding CompareCommand}" ToolTip="比較">
+            <Button Command="{Binding CompareCommand}" ToolTip="ドキュメントを比較">
                 <TextBlock Text="比較"/>
+            </Button>
+            <Button Command="{Binding PreviousDiffCommand}"
+                    ToolTip="前の差分へ移動">
+                <TextBlock Text="前の差分"/>
+            </Button>
+            <Button Command="{Binding NextDiffCommand}"
+                    ToolTip="次の差分へ移動">
+                <TextBlock Text="次の差分"/>
             </Button>
         </ToolBar>
 
