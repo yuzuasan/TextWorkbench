@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using DiffPlex.DiffBuilder.Model;
@@ -24,13 +25,53 @@ public partial class DiffView : UserControl
     /// </summary>
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        if (e.OldValue is DiffTabViewModel oldDiffTab)
+        {
+            oldDiffTab.PropertyChanged -= OnDiffTabPropertyChanged;
+        }
+
         if (e.NewValue is DiffTabViewModel diffTabViewModel)
         {
+            diffTabViewModel.PropertyChanged += OnDiffTabPropertyChanged;
             SideBySideViewer.DiffModel = CreateDiffModel(diffTabViewModel.DiffSession.Result);
+            UpdateCurrentDiff(diffTabViewModel);
             return;
         }
 
         SideBySideViewer.DiffModel = null;
+    }
+
+    /// <summary>
+    /// DiffTabViewModelのプロパティ変更を監視します。
+    /// </summary>
+    private void OnDiffTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is DiffTabViewModel diffTabViewModel)
+        {
+            if (e.PropertyName == nameof(DiffTabViewModel.CurrentDiffIndex))
+            {
+                UpdateCurrentDiff(diffTabViewModel);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 現在の差分を更新します。
+    /// </summary>
+    private void UpdateCurrentDiff(DiffTabViewModel diffTabViewModel)
+    {
+        var currentDiffLine = diffTabViewModel.GetCurrentDiffLine();
+        if (currentDiffLine == null)
+        {
+            return;
+        }
+
+        // DiffPlex.WpfのGoToメソッドを使用して対象行へ移動
+        // 左側の行番号を使用（nullの場合は右側を使用）
+        var lineNumber = currentDiffLine.LeftLineNumber ?? currentDiffLine.RightLineNumber ?? 0;
+        var isLeftLine = currentDiffLine.LeftLineNumber.HasValue;
+
+        SideBySideViewer.GoTo(lineNumber, isLeftLine);
     }
 
     /// <summary>
