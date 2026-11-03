@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 using DiffPlex.DiffBuilder.Model;
 using TextWorkbench.Domain.Enums;
 using TextWorkbench.Domain.Models;
@@ -43,7 +44,10 @@ public partial class DiffView : UserControl
         {
             diffTabViewModel.PropertyChanged += OnDiffTabPropertyChanged;
             SideBySideViewer.DiffModel = CreateDiffModel(diffTabViewModel.DiffSession.Result);
-            UpdateCurrentDiff(diffTabViewModel);
+
+            // DiffModel設定直後は内部のレイアウトが未完了の場合があるため、
+            // Dispatcher経由で更新します。
+            ScheduleUpdateCurrentDiff(diffTabViewModel);
             return;
         }
 
@@ -55,13 +59,21 @@ public partial class DiffView : UserControl
     /// </summary>
     private void OnDiffTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender is DiffTabViewModel diffTabViewModel)
+        if (sender is DiffTabViewModel diffTabViewModel
+            && e.PropertyName == nameof(DiffTabViewModel.CurrentDiffIndex))
         {
-            if (e.PropertyName == nameof(DiffTabViewModel.CurrentDiffIndex))
-            {
-                UpdateCurrentDiff(diffTabViewModel);
-            }
+            ScheduleUpdateCurrentDiff(diffTabViewModel);
         }
+    }
+
+    /// <summary>
+    /// 表示準備完了後に現在差分の更新を実行します。
+    /// </summary>
+    private void ScheduleUpdateCurrentDiff(DiffTabViewModel diffTabViewModel)
+    {
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() => UpdateCurrentDiff(diffTabViewModel)));
     }
 
     /// <summary>
@@ -75,6 +87,21 @@ public partial class DiffView : UserControl
         var currentDiffLine = diffTabViewModel.GetCurrentDiffLine();
         if (currentDiffLine == null)
         {
+            // 差分が未選択の場合は、先頭の実データ行へスクロールします。
+            var firstDiffLine = diffTabViewModel.DiffSession.Result.Lines
+                .FirstOrDefault(line =>
+                    line.LeftLineNumber.HasValue ||
+                    line.RightLineNumber.HasValue);
+
+            if (firstDiffLine != null)
+            {
+                var firstIsLeftLine = firstDiffLine.LeftLineNumber.HasValue;
+                var firstLineNumber = firstDiffLine.LeftLineNumber
+                    ?? firstDiffLine.RightLineNumber!.Value;
+
+                SideBySideViewer.GoTo(firstLineNumber, firstIsLeftLine);
+            }
+
             return;
         }
 
