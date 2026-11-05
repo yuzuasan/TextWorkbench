@@ -1,3 +1,4 @@
+using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
 using TextWorkbench.Presentation.ViewModels;
@@ -39,7 +40,7 @@ public sealed class DocumentContentProvider : IDocumentContentProvider
     /// </summary>
     /// <param name="documentId">Document.Id</param>
     /// <returns>見つかったDocumentTabViewModel</returns>
-    /// <exception cref="InvalidOperationException">指定したIDのDocumentが見つからない場合</exception>
+    /// <exception cref="DocumentNotFoundException">指定したIDのDocumentが見つからない場合</exception>
     private DocumentTabViewModel FindDocumentTab(Guid documentId)
     {
         foreach (var tab in _workspace.Tabs)
@@ -51,6 +52,6 @@ public sealed class DocumentContentProvider : IDocumentContentProvider
             }
         }
 
-        throw new InvalidOperationException($"Document with Id {documentId} not found.");
+        throw new DocumentNotFoundException($"Document with Id {documentId} not found.");
     }
 }
