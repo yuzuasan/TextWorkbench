@@ -23,12 +23,31 @@ public sealed class DocumentContentProvider : IDocumentContentProvider
     /// <inheritdoc />
     public Document GetDocument(Guid documentId)
     {
+        var documentTab = FindDocumentTab(documentId);
+        return documentTab.Document;
+    }
+
+    /// <inheritdoc />
+    public string GetDisplayTitle(Guid documentId)
+    {
+        var documentTab = FindDocumentTab(documentId);
+        return documentTab.DisplayTitle;
+    }
+
+    /// <summary>
+    /// 指定したDocument.Idに一致するDocumentTabViewModelを検索します。
+    /// </summary>
+    /// <param name="documentId">Document.Id</param>
+    /// <returns>見つかったDocumentTabViewModel</returns>
+    /// <exception cref="InvalidOperationException">指定したIDのDocumentが見つからない場合</exception>
+    private DocumentTabViewModel FindDocumentTab(Guid documentId)
+    {
         foreach (var tab in _workspace.Tabs)
         {
             if (tab is DocumentTabViewModel documentTab &&
                 documentTab.Document.Id == documentId)
             {
-                return documentTab.Document;
+                return documentTab;
             }
         }
 
