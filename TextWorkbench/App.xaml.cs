@@ -70,15 +70,20 @@ namespace TextWorkbench
             var searchTextUseCase = new SearchTextUseCase(searchService);
             var replaceTextUseCase = new ReplaceTextUseCase(replaceService);
             var getTextInfoUseCase = new GetTextInfoUseCase(textInfoService);
+
+            // Workspaceを作成
+            var workspace = new Workspace();
+
+            // IDocumentContentProviderを作成
+            IDocumentContentProvider documentContentProvider = new DocumentContentProvider(workspace);
+
             var compareDocumentsUseCase =
                 new CompareDocumentsUseCase(
                     fileService,
                     encodingService,
                     lineEndingService,
-                    diffService);
-
-            // Workspaceを作成
-            var workspace = new Workspace();
+                    diffService,
+                    documentContentProvider);
 
             // ViewModelを作成
             var viewModel = new MainWindowViewModel(

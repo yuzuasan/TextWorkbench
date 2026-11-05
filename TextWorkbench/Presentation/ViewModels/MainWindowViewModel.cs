@@ -722,7 +722,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanExecuteCompare() => !IsProcessing;
 
     /// <summary>
-    /// 2つのファイルを選択して比較し、DiffTabをWorkspaceへ追加します。
+    /// 比較元を選択して比較し、DiffTabをWorkspaceへ追加します。
     /// </summary>
     private void ExecuteCompare()
     {
@@ -731,35 +731,31 @@ public sealed partial class MainWindowViewModel : ObservableObject
             IsProcessing = true;
             RefreshCommandStates();
 
-            // 左側の比較対象ファイルを選択
-            var leftFilePath = _fileDialogService.ShowOpenFileDialog();
+            // 比較元選択ダイアログを作成
+            var dialogViewModel = new ComparisonSourceSelectionDialogViewModel(
+                Workspace,
+                _fileDialogService);
 
-            if (string.IsNullOrWhiteSpace(leftFilePath))
+            var dialog = new ComparisonSourceSelectionDialog
+            {
+                DataContext = dialogViewModel,
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+
+            // ダイアログを表示
+            var result = dialog.ShowDialog();
+
+            if (result != true ||
+                dialogViewModel.LeftComparisonSource == null ||
+                dialogViewModel.RightComparisonSource == null)
             {
                 return;
             }
 
-            // 右側の比較対象ファイルを選択
-            var rightFilePath = _fileDialogService.ShowOpenFileDialog();
-
-            if (string.IsNullOrWhiteSpace(rightFilePath))
-            {
-                return;
-            }
-
-            // 比較元を生成
-            var leftSource = new ComparisonSource(
-                SourceType.File,
-                leftFilePath);
-
-            var rightSource = new ComparisonSource(
-                SourceType.File,
-                rightFilePath);
-
-            // 保存済みファイルを比較
+            // 比較を実行
             var diffSession = _compareDocumentsUseCase.Execute(
-                leftSource,
-                rightSource);
+                dialogViewModel.LeftComparisonSource,
+                dialogViewModel.RightComparisonSource);
 
             // 比較成功後にDiffTabを生成
             var diffTab = new DiffTabViewModel(diffSession);
@@ -773,7 +769,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception)
         {
-            _notificationService.ShowError("ファイルの比較に失敗しました。");
+            _notificationService.ShowError("比較に失敗しました。");
         }
         finally
         {

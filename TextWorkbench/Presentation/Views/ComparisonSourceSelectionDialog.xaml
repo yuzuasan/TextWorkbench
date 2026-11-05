@@ -6,7 +6,7 @@
         mc:Ignorable="d"
         Title="比較対象の選択"
         Width="600"
-        Height="230"
+        Height="250"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     <Grid Margin="16">
