@@ -4,6 +4,7 @@ using System.IO;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Enums;
 using TextWorkbench.Domain.Models;
+using TextWorkbench.Presentation.Helpers;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -194,12 +195,26 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         /// <summary>
         /// 比較元表示名を取得します。
         /// </summary>
-        public string SourceDisplayName =>
-            SelectedDocumentTab != null
-                ? $"開いているドキュメント：{SelectedDocumentTab.DisplayTitle}"
-                : SelectedFilePath != null
-                    ? $"保存済みファイル：{Path.GetFileName(SelectedFilePath)}"
-                    : string.Empty;
+        public string SourceDisplayName
+        {
+            get
+            {
+                if (SelectedDocumentTab != null)
+                {
+                    return SourceTypeHelper.ToHeaderText(
+                        SourceType.OpenDocument,
+                        SelectedDocumentTab.DisplayTitle);
+                }
+                else if (SelectedFilePath != null)
+                {
+                    return SourceTypeHelper.ToHeaderText(
+                        SourceType.File,
+                        Path.GetFileName(SelectedFilePath));
+                }
+
+                return string.Empty;
+            }
+        }
 
         /// <summary>
         /// ファイルパスを設定し、DocumentTabをクリアします。

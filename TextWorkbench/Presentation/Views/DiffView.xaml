@@ -16,26 +16,26 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- 比較対象のファイル名 -->
+        <!-- 比較対象のヘッダー -->
         <Border Grid.Row="0" Grid.Column="0"
                 Padding="8,5"
                 BorderBrush="{DynamicResource DiffViewerHeaderBorderBrush}"
                 BorderThickness="0,0,1,1"
                 Background="{DynamicResource DiffViewerHeaderBackgroundBrush}">
-            <TextBlock Text="{Binding DiffSession.LeftSource.DisplayName}"
+            <TextBlock Text="{Binding LeftHeaderText}"
                        FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis"
-                       ToolTip="{Binding DiffSession.LeftSource.FilePath}"/>
+                       ToolTip="{Binding LeftToolTipText}"/>
         </Border>
         <Border Grid.Row="0" Grid.Column="1"
                 Padding="8,5"
                 BorderBrush="{DynamicResource DiffViewerHeaderBorderBrush}"
                 BorderThickness="0,0,0,1"
                 Background="{DynamicResource DiffViewerHeaderBackgroundBrush}">
-            <TextBlock Text="{Binding DiffSession.RightSource.DisplayName}"
+            <TextBlock Text="{Binding RightHeaderText}"
                        FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis"
-                       ToolTip="{Binding DiffSession.RightSource.FilePath}"/>
+                       ToolTip="{Binding RightToolTipText}"/>
         </Border>
 
         <!-- Diff計算は行わず、DiffSession.Resultを表示用モデルへ変換して描画する -->
