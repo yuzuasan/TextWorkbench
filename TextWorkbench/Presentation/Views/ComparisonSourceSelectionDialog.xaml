@@ -32,6 +32,7 @@
                 <ComboBox ItemsSource="{Binding DocumentCandidates}"
                           SelectedItem="{Binding LeftSelection.SelectedDocumentTab}"
                           DisplayMemberPath="DisplayTitle"
+                          IsEnabled="{Binding HasDocumentCandidates}"
                           Margin="0,0,0,8"/>
 
                 <Button Content="保存済みファイルを選択"
@@ -40,6 +41,7 @@
                         Margin="0,0,0,8"/>
 
                 <TextBlock Text="{Binding LeftSelection.SourceDisplayName}"
+                           ToolTip="{Binding LeftSelection.ToolTipText}"
                            FontWeight="SemiBold"
                            Margin="0,0,0,0"/>
             </StackPanel>
@@ -66,6 +68,7 @@
                 <ComboBox ItemsSource="{Binding DocumentCandidates}"
                           SelectedItem="{Binding RightSelection.SelectedDocumentTab}"
                           DisplayMemberPath="DisplayTitle"
+                          IsEnabled="{Binding HasDocumentCandidates}"
                           Margin="0,0,0,8"/>
 
                 <Button Content="保存済みファイルを選択"
@@ -74,13 +77,14 @@
                         Margin="0,0,0,8"/>
 
                 <TextBlock Text="{Binding RightSelection.SourceDisplayName}"
+                           ToolTip="{Binding RightSelection.ToolTipText}"
                            FontWeight="SemiBold"
                            Margin="0,0,0,0"/>
             </StackPanel>
         </GroupBox>
 
         <!-- ボタン -->
-        <StackPanel Grid.Row="2" Grid.ColumnSpan="3"
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">

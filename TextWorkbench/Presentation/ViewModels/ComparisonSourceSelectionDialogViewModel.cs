@@ -31,6 +31,11 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
     public IReadOnlyList<DocumentTabViewModel> DocumentCandidates { get; }
 
     /// <summary>
+    /// Document候補が存在するかどうかを取得します。
+    /// </summary>
+    public bool HasDocumentCandidates => DocumentCandidates.Count > 0;
+
+    /// <summary>
     /// 比較実行可能かどうかを取得します。
     /// </summary>
     public bool CanExecuteCompare =>
@@ -217,6 +222,27 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         }
 
         /// <summary>
+        /// ツールチップテキストを取得します。
+        /// </summary>
+        public string ToolTipText
+        {
+            get
+            {
+                if (SelectedDocumentTab != null)
+                {
+                    // 保存済みDocumentはフルパス、無題Documentは表示タイトル
+                    return SelectedDocumentTab.Document.FilePath ?? SelectedDocumentTab.DisplayTitle;
+                }
+                else if (SelectedFilePath != null)
+                {
+                    return SelectedFilePath;
+                }
+
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// ファイルパスを設定し、DocumentTabをクリアします。
         /// </summary>
         /// <param name="filePath">ファイルパス</param>
@@ -243,6 +269,7 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         {
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SourceDisplayName));
+            OnPropertyChanged(nameof(ToolTipText));
         }
 
         /// <summary>
@@ -252,6 +279,7 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         {
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SourceDisplayName));
+            OnPropertyChanged(nameof(ToolTipText));
         }
     }
 }
