@@ -6,7 +6,12 @@ namespace TextWorkbench.Domain.Enums;
 public enum SourceType
 {
     /// <summary>
-    /// ファイル
+    /// 保存済みファイル
     /// </summary>
-    File
+    File,
+
+    /// <summary>
+    /// 開いているDocument
+    /// </summary>
+    OpenDocument
 }

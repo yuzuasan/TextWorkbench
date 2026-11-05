@@ -13,9 +13,19 @@ public sealed class DiffSession
     public sealed class DiffSource
     {
         /// <summary>
-        /// ファイルパスを取得します。
+        /// 比較元の種類を取得します。
         /// </summary>
-        public string FilePath { get; }
+        public SourceType SourceType { get; }
+
+        /// <summary>
+        /// 比較元の識別子を取得します。Fileの場合は正規化された絶対ファイルパス、OpenDocumentの場合はDocument.Id。
+        /// </summary>
+        public string SourceIdentifier { get; }
+
+        /// <summary>
+        /// ファイルパスを取得します。保存済みファイルまたは保存済みDocumentのパス。無題Documentはnull。
+        /// </summary>
+        public string? FilePath { get; }
 
         /// <summary>
         /// 表示名を取得します。
@@ -35,13 +45,23 @@ public sealed class DiffSession
         /// <summary>
         /// <see cref="DiffSource"/> の新しいインスタンスを初期化します。
         /// </summary>
-        /// <param name="filePath">ファイルパス</param>
+        /// <param name="sourceType">比較元の種類</param>
+        /// <param name="sourceIdentifier">比較元の識別子</param>
+        /// <param name="filePath">ファイルパス（無題Documentの場合はnull）</param>
         /// <param name="displayName">表示名</param>
         /// <param name="encoding">文字コード</param>
         /// <param name="content">比較時の内容</param>
-        public DiffSource(string filePath, string displayName, TextEncoding encoding, string content)
+        public DiffSource(
+            SourceType sourceType,
+            string sourceIdentifier,
+            string? filePath,
+            string displayName,
+            TextEncoding encoding,
+            string content)
         {
-            FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+            SourceType = sourceType;
+            SourceIdentifier = sourceIdentifier ?? throw new ArgumentNullException(nameof(sourceIdentifier));
+            FilePath = filePath;
             DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
             Encoding = encoding;
             Content = content ?? throw new ArgumentNullException(nameof(content));
