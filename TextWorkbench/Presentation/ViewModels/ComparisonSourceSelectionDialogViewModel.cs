@@ -46,9 +46,9 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
     public ComparisonSource? RightComparisonSource { get; private set; }
 
     /// <summary>
-    /// ダイアログの結果を取得または設定します。
+    /// ダイアログを閉じるイベントです。
     /// </summary>
-    public bool? DialogResult { get; set; }
+    public event EventHandler<bool>? CloseRequested;
 
     /// <summary>
     /// <see cref="ComparisonSourceSelectionDialogViewModel"/> の新しいインスタンスを初期化します。
@@ -123,8 +123,8 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         // 右側のComparisonSourceを生成
         RightComparisonSource = CreateComparisonSource(RightSelection);
 
-        // ダイアログを閉じるためのフラグを設定
-        DialogResult = true;
+        // ダイアログを閉じるイベントを発行
+        CloseRequested?.Invoke(this, true);
     }
 
     /// <summary>
@@ -133,7 +133,8 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
     [RelayCommand]
     private void Cancel()
     {
-        DialogResult = false;
+        // ダイアログを閉じるイベントを発行
+        CloseRequested?.Invoke(this, false);
     }
 
     /// <summary>
