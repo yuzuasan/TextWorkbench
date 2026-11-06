@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using TextWorkbench.Domain.Models;
 using TextWorkbench.Presentation.Behaviors;
+using TextWorkbench.Presentation.Models;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -16,6 +17,11 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     /// Documentを取得します。
     /// </summary>
     public Document Document { get; }
+
+    /// <summary>
+    /// タブ専用の編集状態を取得します。
+    /// </summary>
+    public DocumentEditorState EditorState { get; }
 
     /// <summary>
     /// ツールチップ用のテキストを取得します。
@@ -109,6 +115,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         : base(CalculateDisplayTitle(document))
     {
         Document = document ?? throw new ArgumentNullException(nameof(document));
+        EditorState = new DocumentEditorState(Document.CurrentContent);
     }
 
     /// <summary>
@@ -117,7 +124,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     public void SetDocumentBehavior(TextEditorDocumentBehavior behavior)
     {
         _documentBehavior = behavior;
-        _documentBehavior.Document = Document;
+        _documentBehavior.SetDocumentAndEditorState(Document, EditorState);
         _documentBehavior.SetOnDocumentContentChanged(syncFromEditor => OnDocumentContentChanged(syncFromEditor));
     }
 
