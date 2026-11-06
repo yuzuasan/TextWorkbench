@@ -49,6 +49,7 @@
             </MenuItem>
             <MenuItem Header="比較(_C)">
                 <MenuItem Header="ドキュメントを比較(_C)" Command="{Binding CompareCommand}"/>
+                <MenuItem Header="保存済みファイルと比較(_S)" Command="{Binding CompareWithSavedCommand}"/>
                 <Separator/>
                 <MenuItem Header="次の差分(_N)" Command="{Binding NextDiffCommand}"/>
                 <MenuItem Header="前の差分(_P)" Command="{Binding PreviousDiffCommand}"/>

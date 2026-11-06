@@ -154,6 +154,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public IRelayCommand CompareCommand { get; }
 
     /// <summary>
+    /// 現在のドキュメントと保存済みファイルを比較するコマンドを取得します。
+    /// </summary>
+    public IRelayCommand CompareWithSavedCommand { get; }
+
+    /// <summary>
     /// 次の差分コマンドを取得します。
     /// </summary>
     public IRelayCommand NextDiffCommand { get; }
@@ -243,6 +248,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ExitCommand = new RelayCommand(ExecuteExit, CanExecuteExit);
         OpenSearchReplacePanelCommand = new RelayCommand(ExecuteOpenSearchReplacePanel, CanExecuteOpenSearchReplacePanel);
         CompareCommand = new RelayCommand(ExecuteCompare, CanExecuteCompare);
+        CompareWithSavedCommand = new RelayCommand(ExecuteCompareWithSaved, CanExecuteCompareWithSaved);
         NextDiffCommand = new RelayCommand(ExecuteNextDiff, CanExecuteNextDiff);
         PreviousDiffCommand = new RelayCommand(ExecutePreviousDiff, CanExecutePreviousDiff);
         FindNextCommand = new RelayCommand(ExecuteFindNext, CanExecuteFindNext);
@@ -780,6 +786,69 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 現在のドキュメントと保存済みファイルを比較できるかどうかを判定します。
+    /// </summary>
+    private bool CanExecuteCompareWithSaved()
+    {
+        return !IsProcessing
+            && Workspace.ActiveTab is DocumentTabViewModel documentTab
+            && documentTab.Document.FilePath != null
+            && documentTab.Document.IsModified;
+    }
+
+    /// <summary>
+    /// 現在のドキュメントと保存済みファイルを比較します。
+    /// </summary>
+    private void ExecuteCompareWithSaved()
+    {
+        try
+        {
+            IsProcessing = true;
+            RefreshCommandStates();
+
+            if (Workspace.ActiveTab is not DocumentTabViewModel documentTab)
+            {
+                return;
+            }
+
+            // 左側：保存済みファイル（SourceType.File、Document.FilePath）
+            var leftSource = new ComparisonSource(
+                SourceType.File,
+                documentTab.Document.FilePath!);
+
+            // 右側：現在のドキュメント（SourceType.OpenDocument、Document.Id）
+            var rightSource = new ComparisonSource(
+                SourceType.OpenDocument,
+                documentTab.Document.Id.ToString());
+
+            // 比較を実行
+            var diffSession = _compareDocumentsUseCase.Execute(
+                leftSource,
+                rightSource);
+
+            // 比較成功後にDiffTabを生成
+            var diffTab = new DiffTabViewModel(diffSession);
+
+            // Workspaceへ追加するとActiveTabも自動的に切り替わる
+            Workspace.AddTab(diffTab);
+        }
+        catch (TextWorkbenchException ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _notificationService.ShowError("比較に失敗しました。");
+        }
+        finally
+        {
+            IsProcessing = false;
+
+            RefreshCommandStates();
+        }
+    }
+
+    /// <summary>
     /// 次の差分に移動できるかどうかを判定します。
     /// </summary>
     private bool CanExecuteNextDiff()
@@ -1032,6 +1101,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ExitCommand.NotifyCanExecuteChanged();
         OpenSearchReplacePanelCommand.NotifyCanExecuteChanged();
         CompareCommand.NotifyCanExecuteChanged();
+        CompareWithSavedCommand.NotifyCanExecuteChanged();
         NextDiffCommand.NotifyCanExecuteChanged();
         PreviousDiffCommand.NotifyCanExecuteChanged();
         FindNextCommand.NotifyCanExecuteChanged();
