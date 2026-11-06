@@ -1,6 +1,7 @@
 using ICSharpCode.AvalonEdit;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
+using TextWorkbench.Presentation.Models;
 
 namespace TextWorkbench.Presentation.Behaviors;
 
@@ -11,6 +12,7 @@ public class TextEditorDocumentBehavior
 {
     private TextEditor? _textEditor;
     private Document? _document;
+    private DocumentEditorState? _editorState;
     private bool _isSynchronizing;
     private Action<bool>? _onDocumentContentChanged;
     private readonly ILineEndingService _lineEndingService;
@@ -62,6 +64,39 @@ public class TextEditorDocumentBehavior
     }
 
     /// <summary>
+    /// DocumentとEditorStateを一体として設定します。
+    /// </summary>
+    /// <param name="document">DomainのDocument</param>
+    /// <param name="editorState">タブ専用の編集状態</param>
+    public void SetDocumentAndEditorState(Document? document, DocumentEditorState? editorState)
+    {
+        if (_document == document && _editorState == editorState)
+        {
+            return;
+        }
+
+        _document = document;
+        _editorState = editorState;
+
+        // 同じTextDocumentが既に接続されている場合は、不要な再設定を避ける
+        if (_textEditor != null && _editorState != null)
+        {
+            if (_textEditor.Document != _editorState.TextDocument)
+            {
+                try
+                {
+                    _isSynchronizing = true;
+                    _textEditor.Document = _editorState.TextDocument;
+                }
+                finally
+                {
+                    _isSynchronizing = false;
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Documentの内容変更時に呼び出されるコールバックを設定します。
     /// </summary>
     /// <param name="callback">コールバック（syncFromDocument: DocumentからEditorへ同期するかどうか）</param>
@@ -98,7 +133,7 @@ public class TextEditorDocumentBehavior
         }
 
         // ユーザー編集：Editor → Document
-        var content = _textEditor.Text;
+        var content = _textEditor.Document?.Text ?? string.Empty;
         // 改行コードをLFに正規化
         var normalizedContent = _lineEndingService.NormalizeToLf(content);
         _document.UpdateContent(normalizedContent);
@@ -108,7 +143,7 @@ public class TextEditorDocumentBehavior
 
     private void SyncDocumentToEditor()
     {
-        if (_textEditor == null || _document == null)
+        if (_textEditor == null || _document == null || _editorState == null)
         {
             return;
         }
@@ -116,7 +151,8 @@ public class TextEditorDocumentBehavior
         try
         {
             _isSynchronizing = true;
-            _textEditor.Text = _document.CurrentContent;
+            // TextDocument.Textを使用してUndo履歴を保持する
+            _editorState.TextDocument.Text = _document.CurrentContent;
         }
         finally
         {
