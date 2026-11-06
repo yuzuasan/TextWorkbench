@@ -49,7 +49,7 @@ public partial class DocumentView : UserControl
             // DataContextがDocumentTabViewModelでなくなった場合、Behaviorをクリア
             if (_documentBehavior != null)
             {
-                _documentBehavior.Document = null;
+                _documentBehavior.SetDocumentAndEditorState(null, null);
             }
 
             if (_editorStateBehavior != null)
