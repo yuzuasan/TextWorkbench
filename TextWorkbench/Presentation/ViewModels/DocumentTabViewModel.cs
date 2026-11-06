@@ -234,7 +234,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
 
         if (syncFromDocument)
         {
-            _documentBehavior?.SyncFromDocument();
+            _documentBehavior?.SyncFromDocument(Document);
         }
 
         // 検索条件を保持したまま、内容変更を購読側へ通知します。

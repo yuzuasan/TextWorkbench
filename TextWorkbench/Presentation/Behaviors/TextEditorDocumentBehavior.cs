@@ -163,8 +163,15 @@ public class TextEditorDocumentBehavior
     /// <summary>
     /// プログラムによる変更時にEditorを同期します。
     /// </summary>
-    public void SyncFromDocument()
+    /// <param name="document">同期元のDocument</param>
+    public void SyncFromDocument(Document document)
     {
+        // 呼び出し元DocumentがBehaviorのアクティブDocumentと一致するか確認する
+        if (_document != document)
+        {
+            return;
+        }
+
         SyncDocumentToEditor();
     }
 }
