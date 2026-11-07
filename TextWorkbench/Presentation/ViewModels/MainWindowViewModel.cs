@@ -460,7 +460,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             try
             {
                 // 保存確認と保存処理を行い、閉じてよい場合のみタブを削除する。
-                if (!_closeDocumentUseCase.Execute(documentTab, Workspace))
+                if (!_closeDocumentUseCase.Execute(
+                        documentTab.Document,
+                        documentTab.DisplayTitle))
                 {
                     return;
                 }

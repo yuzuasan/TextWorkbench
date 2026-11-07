@@ -1,6 +1,5 @@
 ﻿using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Domain.Models;
-using TextWorkbench.Presentation.ViewModels;
 
 namespace TextWorkbench.Application.UseCases;
 
@@ -35,22 +34,20 @@ public sealed class CloseDocumentUseCase
     /// <summary>
     /// Documentを閉じてよいか確認し、必要に応じて保存します。
     /// </summary>
-    /// <param name="documentTab">閉じる対象のDocumentTab</param>
-    /// <param name="workspace">Workspace（Save As時の重複確認用）</param>
+    /// <param name="document">閉じる対象のDocument</param>
+    /// <param name="documentDisplayTitle">Documentの表示名</param>
     /// <returns>閉じてよい場合はtrue、閉じない場合はfalse</returns>
-    public bool Execute(DocumentTabViewModel documentTab, Workspace workspace)
+    public bool Execute(Document document, string documentDisplayTitle)
     {
-        if (documentTab == null)
+        if (document == null)
         {
-            throw new ArgumentNullException(nameof(documentTab));
+            throw new ArgumentNullException(nameof(document));
         }
 
-        if (workspace == null)
+        if (documentDisplayTitle == null)
         {
-            throw new ArgumentNullException(nameof(workspace));
+            throw new ArgumentNullException(nameof(documentDisplayTitle));
         }
-
-        Document document = documentTab.Document;
 
         // 変更されていないDocumentは、そのまま閉じてよい。
         if (!document.IsModified)
@@ -59,8 +56,7 @@ public sealed class CloseDocumentUseCase
         }
 
         // 変更内容を保存するか、保存せずに閉じるか、操作をキャンセルするか確認する。
-        var result = _confirmationService.ConfirmSaveChanges(
-            documentTab.DisplayTitle);
+        var result = _confirmationService.ConfirmSaveChanges(documentDisplayTitle);
 
         switch (result)
         {
