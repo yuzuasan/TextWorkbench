@@ -261,6 +261,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
         // Save AsでDocument.FileNameが更新されるため、Tabヘッダーの値自体も更新する。
         DisplayTitle = CalculateDisplayTitle(Document);
 
+        OnPropertyChanged(nameof(ToolTipText));
         OnPropertyChanged(nameof(IsModified));
         OnPropertyChanged(nameof(IsSaving));
         OnPropertyChanged(nameof(IsReadOnly));
