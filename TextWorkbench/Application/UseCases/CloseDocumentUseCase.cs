@@ -70,7 +70,7 @@ public sealed class CloseDocumentUseCase
                 {
                     // Save Asのキャンセル時は閉じない。
                     // 保存に失敗した場合は例外を呼び出し元へ伝播させる。
-                    return _saveDocumentAsUseCase.Execute(document, workspace);
+                    return _saveDocumentAsUseCase.Execute(document);
                 }
 
                 // 通常保存に失敗した場合は例外を呼び出し元へ伝播させる。

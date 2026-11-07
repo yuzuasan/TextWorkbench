@@ -391,9 +391,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            var succeeded = _saveDocumentAsUseCase.Execute(
-                documentTab.Document,
-                Workspace);
+            var succeeded = _saveDocumentAsUseCase.Execute(documentTab.Document);
 
             if (succeeded)
             {

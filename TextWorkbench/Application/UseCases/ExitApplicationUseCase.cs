@@ -101,7 +101,7 @@ public sealed class ExitApplicationUseCase
                     workspace.SetActiveTab(tab);
 
                     // Save Asのキャンセルはfalseとして返り、通知せず終了を中止する。
-                    if (!_saveDocumentAsUseCase.Execute(document, workspace))
+                    if (!_saveDocumentAsUseCase.Execute(document))
                     {
                         return false;
                     }

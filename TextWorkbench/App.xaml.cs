@@ -42,6 +42,13 @@ namespace TextWorkbench
             IExitConfirmationService exitConfirmationService = new MessageBoxExitConfirmationService();
             IFileDialogService fileDialogService = new FileDialogService();
 
+            // Workspaceを作成
+            var workspace = new Workspace();
+
+            // Workspace連携Presentationサービスを作成
+            IDocumentPathRegistry documentPathRegistry =
+                new WorkspaceDocumentPathRegistry(workspace);
+
             // UseCaseを作成
             var newDocumentUseCase = new NewDocumentUseCase();
             var openDocumentUseCase = new OpenDocumentUseCase(
@@ -55,6 +62,7 @@ namespace TextWorkbench
                 lineEndingService);
             var saveDocumentAsUseCase = new SaveDocumentAsUseCase(
                 fileDialogService,
+                documentPathRegistry,
                 fileService,
                 encodingService,
                 lineEndingService);
@@ -70,9 +78,6 @@ namespace TextWorkbench
             var searchTextUseCase = new SearchTextUseCase(searchService);
             var replaceTextUseCase = new ReplaceTextUseCase(replaceService);
             var getTextInfoUseCase = new GetTextInfoUseCase(textInfoService);
-
-            // Workspaceを作成
-            var workspace = new Workspace();
 
             // IDocumentContentProviderを作成
             IDocumentContentProvider documentContentProvider = new DocumentContentProvider(workspace);
