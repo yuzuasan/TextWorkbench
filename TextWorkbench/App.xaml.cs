@@ -19,6 +19,10 @@ namespace TextWorkbench
     {
         private void OnStartup(object sender, StartupEventArgs e)
         {
+            // グローバル例外ハンドラで使用する通知サービスを先に生成する
+            IUserNotificationService notificationService = new MessageBoxNotificationService();
+            RegisterExceptionHandlers(notificationService);
+
             // Shift-JIS対応のためCodePagesEncodingProviderを登録
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
@@ -37,7 +41,6 @@ namespace TextWorkbench
             IDiffService diffService = new DiffService(diffEngineAdapter);
 
             // Presentationサービスを作成
-            IUserNotificationService notificationService = new MessageBoxNotificationService();
             IUserConfirmationService confirmationService = new MessageBoxConfirmationService();
             IExitConfirmationService exitConfirmationService = new MessageBoxExitConfirmationService();
             IFileDialogService fileDialogService = new FileDialogService();
@@ -118,6 +121,54 @@ namespace TextWorkbench
                 DataContext = viewModel
             };
             mainWindow.Show();
+        }
+
+        /// <summary>
+        /// 未処理例外のグローバルハンドラを登録します。
+        /// </summary>
+        /// <param name="notificationService">通知サービス</param>
+        private void RegisterExceptionHandlers(IUserNotificationService notificationService)
+        {
+            // UIスレッドの未処理例外。通知後に確実に終了する。
+            // Shutdown()ではClosingイベント経由で終了確認が走るため、
+            // 例外ハンドリング中のダイアログ表示を避けるためEnvironment.Exitを使用する。
+            DispatcherUnhandledException += (_, args) =>
+            {
+                args.Handled = true;
+                ShowUnexpectedError(notificationService);
+                Environment.Exit(1);
+            };
+
+            // バックグラウンドスレッド等の未処理例外。
+            // プロセス終了はOSが行うため、ここでは通知のみ行う。
+            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            {
+                ShowUnexpectedError(notificationService);
+            };
+
+            // Taskの未観測例外。観測済みにしてプロセス昇格を防ぎ、通知する。
+            TaskScheduler.UnobservedTaskException += (_, args) =>
+            {
+                args.SetObserved();
+                ShowUnexpectedError(notificationService);
+            };
+        }
+
+        /// <summary>
+        /// 予期しないエラーをユーザーへ通知します。
+        /// 最終防衛線のため、通知自体の失敗は無視します。
+        /// </summary>
+        /// <param name="notificationService">通知サービス</param>
+        private static void ShowUnexpectedError(IUserNotificationService notificationService)
+        {
+            try
+            {
+                notificationService.ShowError("予期しないエラーが発生しました。");
+            }
+            catch
+            {
+                // 通知に失敗しても二次例外を発生させない
+            }
         }
     }
 }
