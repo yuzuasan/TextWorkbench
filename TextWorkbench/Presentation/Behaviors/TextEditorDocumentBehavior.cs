@@ -46,24 +46,6 @@ public class TextEditorDocumentBehavior
     }
 
     /// <summary>
-    /// Documentを取得または設定します。
-    /// </summary>
-    public Document? Document
-    {
-        get => _document;
-        set
-        {
-            if (_document == value)
-            {
-                return;
-            }
-
-            _document = value;
-            SyncDocumentToEditor();
-        }
-    }
-
-    /// <summary>
     /// DocumentとEditorStateを一体として設定します。
     /// </summary>
     /// <param name="document">DomainのDocument</param>
