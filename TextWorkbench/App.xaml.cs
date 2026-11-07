@@ -48,6 +48,10 @@ namespace TextWorkbench
             // Workspace連携Presentationサービスを作成
             IDocumentPathRegistry documentPathRegistry =
                 new WorkspaceDocumentPathRegistry(workspace);
+            IOpenDocumentProvider openDocumentProvider =
+                new WorkspaceOpenDocumentProvider(workspace);
+            IDocumentActivationService documentActivationService =
+                new WorkspaceDocumentActivationService(workspace);
 
             // UseCaseを作成
             var newDocumentUseCase = new NewDocumentUseCase();
@@ -71,6 +75,8 @@ namespace TextWorkbench
                 saveDocumentUseCase,
                 saveDocumentAsUseCase);
             var exitApplicationUseCase = new ExitApplicationUseCase(
+                openDocumentProvider,
+                documentActivationService,
                 exitConfirmationService,
                 notificationService,
                 saveDocumentUseCase,

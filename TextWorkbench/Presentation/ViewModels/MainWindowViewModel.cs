@@ -515,7 +515,32 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            return _exitApplicationUseCase.Execute(Workspace);
+            var result = _exitApplicationUseCase.Execute();
+
+            // 終了中止時でも、先行して保存済みとなったDocumentの
+            // ViewModel通知をPresentation側で行う。
+            foreach (var documentId in result.SavedDocumentIds)
+            {
+                var documentTab = Workspace.Tabs
+                    .OfType<DocumentTabViewModel>()
+                    .FirstOrDefault(tab => tab.Document.Id == documentId);
+
+                if (documentTab == null)
+                {
+                    continue;
+                }
+
+                if (result.SavedAsDocumentIds.Contains(documentId))
+                {
+                    documentTab.OnDocumentSavedAs();
+                }
+                else
+                {
+                    documentTab.OnDocumentSaved();
+                }
+            }
+
+            return result.CanExit;
         }
         catch (TextWorkbenchException ex)
         {
