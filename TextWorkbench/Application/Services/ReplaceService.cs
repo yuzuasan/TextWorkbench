@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using TextWorkbench.Application.Constants;
 using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
@@ -98,7 +99,10 @@ public sealed class ReplaceService : IReplaceService
         try
         {
             // 複数行モードと大文字小文字を区別しない検索を常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            var regex = new Regex(
+                pattern,
+                RegexOptions.Multiline | RegexOptions.IgnoreCase,
+                RegexConstants.MatchTimeout);
 
             // startIndex以降で最初の一致を検索
             var match = regex.Match(content, startIndex);
@@ -119,6 +123,10 @@ public sealed class ReplaceService : IReplaceService
         catch (ArgumentException ex)
         {
             throw new InvalidRegexException("正規表現が無効です。", ex);
+        }
+        catch (RegexMatchTimeoutException ex)
+        {
+            throw new InvalidRegexException("正規表現の処理がタイムアウトしました。", ex);
         }
     }
 
@@ -184,7 +192,10 @@ public sealed class ReplaceService : IReplaceService
         try
         {
             // 複数行モードと大文字小文字を区別しない検索を常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            var regex = new Regex(
+                pattern,
+                RegexOptions.Multiline | RegexOptions.IgnoreCase,
+                RegexConstants.MatchTimeout);
 
             var matches = regex.Matches(content);
             if (matches.Count == 0)
@@ -202,6 +213,10 @@ public sealed class ReplaceService : IReplaceService
         catch (ArgumentException ex)
         {
             throw new InvalidRegexException("正規表現が無効です。", ex);
+        }
+        catch (RegexMatchTimeoutException ex)
+        {
+            throw new InvalidRegexException("正規表現の処理がタイムアウトしました。", ex);
         }
     }
 

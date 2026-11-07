@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TextWorkbench.Application.Constants;
 using TextWorkbench.Application.Exceptions;
 using TextWorkbench.Application.Interfaces;
 using TextWorkbench.Application.Models;
@@ -67,7 +68,10 @@ public sealed class SearchService : ISearchService
         try
         {
             // 複数行モードと大文字小文字を区別しない検索を常時有効とする
-            var regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            var regex = new Regex(
+                pattern,
+                RegexOptions.Multiline | RegexOptions.IgnoreCase,
+                RegexConstants.MatchTimeout);
 
             foreach (Match match in regex.Matches(content))
             {
@@ -84,6 +88,10 @@ public sealed class SearchService : ISearchService
         catch (ArgumentException ex)
         {
             throw new InvalidRegexException("正規表現が無効です。", ex);
+        }
+        catch (RegexMatchTimeoutException ex)
+        {
+            throw new InvalidRegexException("正規表現の処理がタイムアウトしました。", ex);
         }
 
         return results;
