@@ -198,6 +198,26 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         public bool HasSelection => SelectedDocumentTab != null || SelectedFilePath != null;
 
         /// <summary>
+        /// ComboBoxの選択項目を取得または設定します。
+        /// 設定時はSetDocumentTabを経由し、ファイルパスとの相互排他を維持します。
+        /// </summary>
+        public DocumentTabViewModel? DocumentTabSelection
+        {
+            get => SelectedDocumentTab;
+            set
+            {
+                if (value == null)
+                {
+                    SelectedDocumentTab = null;
+                }
+                else
+                {
+                    SetDocumentTab(value);
+                }
+            }
+        }
+
+        /// <summary>
         /// 比較元表示名を取得します。
         /// </summary>
         public string SourceDisplayName
@@ -267,6 +287,7 @@ public sealed partial class ComparisonSourceSelectionDialogViewModel : Observabl
         /// </summary>
         partial void OnSelectedDocumentTabChanged(DocumentTabViewModel? value)
         {
+            OnPropertyChanged(nameof(DocumentTabSelection));
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SourceDisplayName));
             OnPropertyChanged(nameof(ToolTipText));

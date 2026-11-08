@@ -30,7 +30,7 @@
                            FontWeight="SemiBold"
                            Margin="0,0,0,4"/>
                 <ComboBox ItemsSource="{Binding DocumentCandidates}"
-                          SelectedItem="{Binding LeftSelection.SelectedDocumentTab}"
+                          SelectedItem="{Binding LeftSelection.DocumentTabSelection}"
                           DisplayMemberPath="DisplayTitle"
                           IsEnabled="{Binding HasDocumentCandidates}"
                           Margin="0,0,0,8"/>
@@ -66,7 +66,7 @@
                            FontWeight="SemiBold"
                            Margin="0,0,0,4"/>
                 <ComboBox ItemsSource="{Binding DocumentCandidates}"
-                          SelectedItem="{Binding RightSelection.SelectedDocumentTab}"
+                          SelectedItem="{Binding RightSelection.DocumentTabSelection}"
                           DisplayMemberPath="DisplayTitle"
                           IsEnabled="{Binding HasDocumentCandidates}"
                           Margin="0,0,0,8"/>
