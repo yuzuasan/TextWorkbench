@@ -60,20 +60,25 @@ public class TextEditorDocumentBehavior
         _document = document;
         _editorState = editorState;
 
-        // 同じTextDocumentが既に接続されている場合は、不要な再設定を避ける
-        if (_textEditor != null && _editorState != null)
+        if (_textEditor == null)
         {
-            if (_textEditor.Document != _editorState.TextDocument)
+            return;
+        }
+
+        // EditorStateがない場合はEditorの表示も切断する
+        var newTextDocument = _editorState?.TextDocument;
+
+        // 同じTextDocumentが既に接続されている場合は、不要な再設定を避ける
+        if (_textEditor.Document != newTextDocument)
+        {
+            try
             {
-                try
-                {
-                    _isSynchronizing = true;
-                    _textEditor.Document = _editorState.TextDocument;
-                }
-                finally
-                {
-                    _isSynchronizing = false;
-                }
+                _isSynchronizing = true;
+                _textEditor.Document = newTextDocument;
+            }
+            finally
+            {
+                _isSynchronizing = false;
             }
         }
     }
