@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TextWorkbench.Domain.Models;
 using TextWorkbench.Presentation.Helpers;
-using TextWorkbench.Presentation.Views;
 
 namespace TextWorkbench.Presentation.ViewModels;
 
@@ -49,6 +48,11 @@ public sealed partial class TextInfoDialogViewModel : ObservableObject
     public IRelayCommand OkCommand { get; }
 
     /// <summary>
+    /// ダイアログを閉じるイベントです。
+    /// </summary>
+    public event EventHandler<bool>? CloseRequested;
+
+    /// <summary>
     /// <see cref="TextInfoDialogViewModel"/> の新しいインスタンスを初期化します。
     /// </summary>
     public TextInfoDialogViewModel()
@@ -76,11 +80,7 @@ public sealed partial class TextInfoDialogViewModel : ObservableObject
     /// </summary>
     private void ExecuteOk()
     {
-        // Windowを閉じる
-        if (System.Windows.Application.Current.Windows.OfType<TextInfoDialog>().FirstOrDefault() is TextInfoDialog dialog)
-        {
-            dialog.DialogResult = true;
-            dialog.Close();
-        }
+        // ダイアログを閉じるイベントを発行
+        CloseRequested?.Invoke(this, true);
     }
 }
