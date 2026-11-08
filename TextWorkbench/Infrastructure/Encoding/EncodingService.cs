@@ -37,8 +37,15 @@ public sealed class EncodingService : IEncodingService
             if (bomEncoding == TextEncoding.Utf8Bom)
             {
                 var encoding = new UTF8Encoding(true, true);
-                var text = encoding.GetString(bytes, 3, bytes.Length - 3);
-                return new DecodedText(text, TextEncoding.Utf8Bom);
+                try
+                {
+                    var text = encoding.GetString(bytes, 3, bytes.Length - 3);
+                    return new DecodedText(text, TextEncoding.Utf8Bom);
+                }
+                catch (DecoderFallbackException)
+                {
+                    throw new EncodingOperationException("対応していない文字コードまたは形式です。");
+                }
             }
             else
             {
