@@ -713,9 +713,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             var result = SearchReplacePanelViewModel.ReplaceAll();
 
+            // 置換結果が現在の内容と同一の場合は実質0件として扱う
+            var isUnchanged = string.Equals(
+                documentTab.Document.CurrentContent,
+                result.Content,
+                StringComparison.Ordinal);
+
             // 0件の場合も件数を通知しますが、
             // Documentの内容や未保存状態は変更しません。
-            if (result.ReplacementCount == 0)
+            if (result.ReplacementCount == 0 || isUnchanged)
             {
                 _notificationService.ShowInfo("0件置換しました");
                 return;

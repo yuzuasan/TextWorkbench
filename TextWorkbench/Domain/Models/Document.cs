@@ -114,7 +114,15 @@ public sealed class Document
     /// <param name="newContent">新しいテキスト内容（LF正規化済み）</param>
     public void UpdateContent(string newContent)
     {
-        CurrentContent = newContent ?? throw new ArgumentNullException(nameof(newContent));
+        ArgumentNullException.ThrowIfNull(newContent);
+
+        // 内容が変わらない場合は変更マークを付けない
+        if (string.Equals(CurrentContent, newContent, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        CurrentContent = newContent;
         IsModified = true;
     }
 
