@@ -66,6 +66,16 @@ TextWorkbenchは、Windows向けのテキスト編集アプリケーションで
 | DiffPlex              | テキスト差分比較   |
 | DiffPlex.Wpf          | WPF向け差分表示  |
 
+## 使用ライブラリへの謝辞
+
+TextWorkbenchは、以下のオープンソースライブラリを利用しています。
+各ライブラリの開発者およびコントリビューターの皆さまに感謝します。
+
+- [AvalonEdit](https://github.com/icsharpcode/AvalonEdit) ([NuGet](https://www.nuget.org/packages/AvalonEdit/)) - WPF向けテキストエディタコンポーネント（6.3.1.120）
+- [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet) ([ドキュメント](https://learn.microsoft.com/dotnet/communitytoolkit/mvvm/)、[NuGet](https://www.nuget.org/packages/CommunityToolkit.Mvvm/)) - MVVM実装を支援するライブラリ（8.4.2）
+- [DiffPlex](https://github.com/mmanela/diffplex) ([NuGet](https://www.nuget.org/packages/DiffPlex/)) - テキストの差分を生成するライブラリ（1.9.0）
+- [DiffPlex.Wpf](https://github.com/mmanela/diffplex) ([NuGet](https://www.nuget.org/packages/DiffPlex.Wpf/)) - WPF向けの差分表示コンポーネント（1.9.1）
+
 ## ビルド・実行方法
 
 ### 1. リポジトリを取得
