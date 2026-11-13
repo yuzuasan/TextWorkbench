@@ -61,6 +61,7 @@ public sealed partial class DiffTabViewModel : TabViewModel
     /// </summary>
     private static string CalculateDisplayTitle(DiffSession diffSession)
     {
+        ArgumentNullException.ThrowIfNull(diffSession);
         var leftName = diffSession.LeftSource.DisplayName;
         var rightName = diffSession.RightSource.DisplayName;
         return $"{leftName} ↔ {rightName}";
