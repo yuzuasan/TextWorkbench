@@ -910,7 +910,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return !IsProcessing
             && Workspace.ActiveTab is DiffTabViewModel diffTab
             && diffTab.DiffCount > 0
-            && diffTab.CurrentDiffIndex > 0;
+            && diffTab.CurrentDiffIndex != 0;
     }
 
     /// <summary>
