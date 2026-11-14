@@ -286,6 +286,170 @@ public class MainWindowViewModelTests
         Assert.Null(harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab);
     }
 
+    // Execute：安全に実行可能なコマンド
+
+    [Fact]
+    public void ExitCommand_実行するとExitRequestedイベントが発火する()
+    {
+        var harness = new Harness();
+        var raised = false;
+        harness.ViewModel.ExitRequested += (_, _) => raised = true;
+
+        harness.ViewModel.ExitCommand.Execute(null);
+
+        Assert.True(raised);
+    }
+
+    [Fact]
+    public void NewCommand_実行するとDocumentタブが追加されアクティブになる()
+    {
+        var harness = new Harness();
+
+        harness.ViewModel.NewCommand.Execute(null);
+
+        Assert.Equal(2, harness.Workspace.Tabs.Count);
+        var activeTab = Assert.IsType<DocumentTabViewModel>(harness.Workspace.ActiveTab);
+        Assert.Equal("無題2", activeTab.DisplayTitle);
+    }
+
+    [Fact]
+    public void CloseCommand_未変更Documentの場合_確認なしでタブが閉じられる()
+    {
+        var harness = new Harness();
+
+        harness.ViewModel.CloseCommand.Execute(null);
+
+        Assert.Empty(harness.Workspace.Tabs);
+        Assert.Null(harness.Workspace.ActiveTab);
+        Assert.Equal(0, harness.ConfirmationService.CallCount);
+    }
+
+    [Fact]
+    public void CloseCommand_変更済みDocumentでキャンセルした場合_タブが残り変更状態が維持される()
+    {
+        var harness = new Harness();
+        harness.ConfirmationService.Result = SaveConfirmationResult.Cancel;
+        var tab = (DocumentTabViewModel)harness.Workspace.ActiveTab!;
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.CloseCommand.Execute(null);
+
+        Assert.Single(harness.Workspace.Tabs);
+        Assert.True(tab.Document.IsModified);
+        Assert.Empty(harness.FileService.WrittenFiles);
+    }
+
+    [Fact]
+    public void CloseCommand_変更済みDocumentで保存を選択した場合_保存されてタブが閉じられる()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.CloseCommand.Execute(null);
+
+        Assert.Single(harness.FileService.WrittenFiles);
+        Assert.DoesNotContain(tab, harness.Workspace.Tabs);
+    }
+
+    [Fact]
+    public void CloseCommand_無題変更済みDocumentで保存を選択しパスが指定された場合_タブが閉じられる()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = @"C:\work\new.txt";
+        var tab = (DocumentTabViewModel)harness.Workspace.ActiveTab!;
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.CloseCommand.Execute(null);
+
+        Assert.Single(harness.FileService.WrittenFiles);
+        Assert.Empty(harness.Workspace.Tabs);
+    }
+
+    [Fact]
+    public void SaveCommand_ファイルありDocumentの場合_保存されIsModifiedがfalseになる()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveCommand.Execute(null);
+
+        Assert.Single(harness.FileService.WrittenFiles);
+        Assert.False(tab.Document.IsModified);
+        Assert.Empty(harness.NotificationService.ErrorMessages);
+    }
+
+    [Fact]
+    public void SaveCommand_無題Documentの場合_SaveAsに委譲されダイアログでキャンセルなら保存されない()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = null;
+        var tab = (DocumentTabViewModel)harness.Workspace.ActiveTab!;
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveCommand.Execute(null);
+
+        Assert.Empty(harness.FileService.WrittenFiles);
+        Assert.True(tab.Document.IsModified);
+    }
+
+    [Fact]
+    public void SaveCommand_書き込み失敗の場合_エラー通知されIsModifiedが維持される()
+    {
+        var harness = new Harness();
+        harness.FileService.WriteException = new IOException("disk error");
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveCommand.Execute(null);
+
+        Assert.Contains("保存に失敗しました。", harness.NotificationService.ErrorMessages);
+        Assert.True(tab.Document.IsModified);
+    }
+
+    // CanExit
+
+    [Fact]
+    public void CanExit_未保存Documentがない場合_trueが返る()
+    {
+        var harness = new Harness();
+
+        Assert.True(harness.ViewModel.CanExit());
+    }
+
+    [Fact]
+    public void CanExit_終了キャンセルの場合_falseが返る()
+    {
+        var harness = new Harness();
+        harness.ExitConfirmationService.Result = ExitConfirmationResult.Cancel;
+        var document = new Document(@"C:\work\a.txt", "a.txt", "content",
+            TextEncoding.Utf8, LineEnding.CrLf, false);
+        document.UpdateContent("changed");
+        harness.OpenDocumentProvider.Documents.Add(new OpenDocumentInfo(document, "a.txt"));
+
+        Assert.False(harness.ViewModel.CanExit());
+        Assert.True(document.IsModified);
+    }
+
+    [Fact]
+    public void CanExit_保存して終了の場合_Documentが保存されtrueが返る()
+    {
+        var harness = new Harness();
+        harness.ExitConfirmationService.Result = ExitConfirmationResult.SaveAndExit;
+        var document = new Document(@"C:\work\a.txt", "a.txt", "content",
+            TextEncoding.Utf8, LineEnding.CrLf, false);
+        document.UpdateContent("changed");
+        harness.OpenDocumentProvider.Documents.Add(new OpenDocumentInfo(document, "a.txt"));
+
+        Assert.True(harness.ViewModel.CanExit());
+        Assert.False(document.IsModified);
+        Assert.Single(harness.FileService.WrittenFiles);
+    }
+
     // テストデータ作成ヘルパー
 
     private static Document CreateDocument(
@@ -486,9 +650,11 @@ public class MainWindowViewModelTests
     {
         public SaveConfirmationResult Result { get; set; } = SaveConfirmationResult.Save;
         public string? LastDocumentTitle { get; private set; }
+        public int CallCount { get; private set; }
 
         public SaveConfirmationResult ConfirmSaveChanges(string documentTitle)
         {
+            CallCount++;
             LastDocumentTitle = documentTitle;
             return Result;
         }
