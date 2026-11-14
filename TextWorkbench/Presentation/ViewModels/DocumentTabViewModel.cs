@@ -291,6 +291,7 @@ public sealed partial class DocumentTabViewModel : TabViewModel
     /// </summary>
     private static string CalculateDisplayTitle(Document document)
     {
+        ArgumentNullException.ThrowIfNull(document);
         if (!string.IsNullOrEmpty(document.FileName))
         {
             return document.FileName;
