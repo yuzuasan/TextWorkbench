@@ -235,6 +235,112 @@ public class CompareDocumentsUseCaseTests
         Assert.Throws<FileOperationException>(() => useCase.Execute(source, source));
     }
 
+    // 混合比較：File×OpenDocument
+
+    [Fact]
+    public void Execute_FileとOpenDocumentの混合比較で正しい情報が使われる()
+    {
+        var filePath = @"C:\work\left.txt";
+        var fileService = new FakeFileService().AddFile(filePath, new byte[] { 1 });
+        var encodingService = new FakeEncodingService()
+            .AddDecodeResult(new DecodedText("file raw", TextEncoding.ShiftJis));
+        var lineEndingService = new FakeLineEndingService()
+            .AddNormalizeResult("file normalized");
+        var doc = CreateDocument(@"C:\work\doc.txt", "doc.txt", "doc content", TextEncoding.Utf8);
+        var provider = new FakeDocumentContentProvider().AddDocument(doc, "doc.txt");
+        var diffResult = new DiffResult("left.txt", "doc.txt", Array.Empty<DiffLine>());
+        var diffService = new FakeDiffService(diffResult);
+        var useCase = CreateUseCase(
+            fileService, encodingService, lineEndingService, diffService, provider);
+
+        var session = useCase.Execute(
+            new ComparisonSource(SourceType.File, filePath),
+            new ComparisonSource(SourceType.OpenDocument, doc.Id.ToString()));
+
+        // DiffServiceへの引数：左=File側（正規化済み）、右=Document側（CurrentContentそのまま）
+        Assert.Equal("left.txt", diffService.LastLeftFileName);
+        Assert.Equal("doc.txt", diffService.LastRightFileName);
+        Assert.Equal("file normalized", diffService.LastLeftText);
+        Assert.Equal("doc content", diffService.LastRightText);
+
+        // File側のみNormalizeToLfが呼ばれる（OpenDocument側は呼ばれない非対称仕様）
+        Assert.Single(lineEndingService.NormalizedInputs);
+        Assert.Equal("file raw", lineEndingService.NormalizedInputs[0]);
+
+        // File側スナップショットの全プロパティ
+        Assert.Equal(SourceType.File, session.LeftSource.SourceType);
+        Assert.Equal(filePath, session.LeftSource.SourceIdentifier);
+        Assert.Equal(Path.GetFullPath(filePath), session.LeftSource.FilePath);
+        Assert.Equal("left.txt", session.LeftSource.DisplayName);
+        Assert.Equal(TextEncoding.ShiftJis, session.LeftSource.Encoding);
+        Assert.Equal("file normalized", session.LeftSource.Content);
+
+        // OpenDocument側スナップショットの全プロパティ
+        Assert.Equal(SourceType.OpenDocument, session.RightSource.SourceType);
+        Assert.Equal(doc.Id.ToString(), session.RightSource.SourceIdentifier);
+        Assert.Equal(@"C:\work\doc.txt", session.RightSource.FilePath);
+        Assert.Equal("doc.txt", session.RightSource.DisplayName);
+        Assert.Equal(TextEncoding.Utf8, session.RightSource.Encoding);
+        Assert.Equal("doc content", session.RightSource.Content);
+    }
+
+    [Fact]
+    public void Execute_OpenDocumentとFileの逆順混合比較で正しい情報が使われる()
+    {
+        var filePath = @"C:\work\right.txt";
+        var fileService = new FakeFileService().AddFile(filePath, new byte[] { 1 });
+        var encodingService = new FakeEncodingService()
+            .AddDecodeResult(new DecodedText("file raw", TextEncoding.Utf8));
+        var lineEndingService = new FakeLineEndingService()
+            .AddNormalizeResult("file normalized");
+        var doc = CreateDocument(null, "無題1", "doc content", TextEncoding.Utf8);
+        var provider = new FakeDocumentContentProvider().AddDocument(doc, "無題1");
+        var diffResult = new DiffResult("無題1", "right.txt", Array.Empty<DiffLine>());
+        var diffService = new FakeDiffService(diffResult);
+        var useCase = CreateUseCase(
+            fileService, encodingService, lineEndingService, diffService, provider);
+
+        var session = useCase.Execute(
+            new ComparisonSource(SourceType.OpenDocument, doc.Id.ToString()),
+            new ComparisonSource(SourceType.File, filePath));
+
+        // DiffServiceへの引数：左=Document側、右=File側
+        Assert.Equal("無題1", diffService.LastLeftFileName);
+        Assert.Equal("right.txt", diffService.LastRightFileName);
+        Assert.Equal("doc content", diffService.LastLeftText);
+        Assert.Equal("file normalized", diffService.LastRightText);
+
+        // スナップショットの左右対応
+        Assert.Equal(SourceType.OpenDocument, session.LeftSource.SourceType);
+        Assert.Equal("doc content", session.LeftSource.Content);
+        Assert.Equal(SourceType.File, session.RightSource.SourceType);
+        Assert.Equal("file normalized", session.RightSource.Content);
+    }
+
+    // スナップショット不変性
+
+    [Fact]
+    public void Execute_比較後に元Documentを編集してもDiffSessionの内容は変わらない()
+    {
+        var doc = CreateDocument(@"C:\work\a.txt", "a.txt", "before", TextEncoding.Utf8);
+        var provider = new FakeDocumentContentProvider().AddDocument(doc, "a.txt");
+        var diffService = new FakeDiffService(CreateEmptyDiffResult());
+        var useCase = CreateUseCase(
+            documentContentProvider: provider,
+            diffService: diffService);
+        var fileSource = new ComparisonSource(SourceType.File, "a.txt");
+        var docSource = new ComparisonSource(SourceType.OpenDocument, doc.Id.ToString());
+
+        var session = useCase.Execute(docSource, fileSource);
+
+        // 比較後にDocumentを編集
+        doc.UpdateContent("after");
+
+        // DiffSessionのスナップショットは比較時点の内容を保持
+        Assert.Equal("before", session.LeftSource.Content);
+        Assert.Equal("before", diffService.LastLeftText);
+    }
+
     // テストデータ作成ヘルパー
 
     private static CompareDocumentsUseCase CreateUseCase(
