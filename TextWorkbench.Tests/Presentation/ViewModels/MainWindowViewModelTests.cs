@@ -450,6 +450,263 @@ public class MainWindowViewModelTests
         Assert.Single(harness.FileService.WrittenFiles);
     }
 
+    // Execute：比較
+
+    [Fact]
+    public void CompareWithSavedCommand_実行するとDiffTabが追加され処理状態が復帰する()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+        harness.OpenDocumentProvider.Documents.Add(
+            new OpenDocumentInfo(tab.Document, "a.txt"));
+        harness.DocumentContentProvider.AddDocument(tab.Document, "a.txt");
+        harness.FileService.ReadResult = new FileReadResult(
+            System.Text.Encoding.UTF8.GetBytes("saved"), false);
+        harness.EncodingService.DecodeResult = new DecodedText("saved", TextEncoding.Utf8);
+        harness.DiffService.Result = new DiffResult("a.txt", "a.txt", Array.Empty<DiffLine>());
+
+        harness.ViewModel.CompareWithSavedCommand.Execute(null);
+
+        Assert.Equal(3, harness.Workspace.Tabs.Count);
+        Assert.IsType<DiffTabViewModel>(harness.Workspace.ActiveTab);
+        Assert.False(harness.ViewModel.IsProcessing);
+        Assert.Empty(harness.NotificationService.ErrorMessages);
+    }
+
+    [Fact]
+    public void CompareWithSavedCommand_比較失敗時はエラー通知され処理状態が復帰する()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+        harness.OpenDocumentProvider.Documents.Add(
+            new OpenDocumentInfo(tab.Document, "a.txt"));
+        harness.DocumentContentProvider.AddDocument(tab.Document, "a.txt");
+        harness.DiffService.Exception = new InvalidOperationException("diff error");
+
+        harness.ViewModel.CompareWithSavedCommand.Execute(null);
+
+        Assert.Equal(2, harness.Workspace.Tabs.Count);
+        Assert.IsType<DocumentTabViewModel>(harness.Workspace.ActiveTab);
+        Assert.False(harness.ViewModel.IsProcessing);
+        Assert.Contains("比較に失敗しました。", harness.NotificationService.ErrorMessages);
+    }
+
+    // Execute：置換
+
+    [Fact]
+    public void ReplaceNextCommand_実行するとDocumentへ反映され次の開始位置が設定される()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt", content: "hello world");
+        harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab = tab;
+        tab.SearchText = "o";
+        tab.ReplaceText = "0";
+        tab.SetSearchResults(new[] { new SearchResult(0, 1) });
+        harness.ReplaceService.FirstResult = new ReplaceResult(
+            "hell0 world", 1, 4, 1, 1);
+
+        harness.ViewModel.ReplaceNextCommand.Execute(null);
+
+        Assert.Equal("hell0 world", tab.Document.CurrentContent);
+        Assert.True(tab.Document.IsModified);
+        Assert.Equal(5, tab.ReplaceNextStartIndex);
+        Assert.Empty(tab.SearchResults);
+    }
+
+    [Fact]
+    public void ReplaceNextCommand_ゼロ幅一致の場合は開始位置が1文字進む()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt", content: "abc");
+        harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab = tab;
+        tab.SearchText = "x*";
+        tab.ReplaceText = "R";
+        tab.SetSearchResults(new[] { new SearchResult(0, 0) });
+        // ゼロ幅一致：start=0, matchLength=0, replacementLength=1 → nextStartIndex = 0 + max(1,1) = 1
+        harness.ReplaceService.FirstResult = new ReplaceResult(
+            "Rabc", 1, 0, 0, 1);
+
+        harness.ViewModel.ReplaceNextCommand.Execute(null);
+
+        Assert.Equal("Rabc", tab.Document.CurrentContent);
+        Assert.Equal(1, tab.ReplaceNextStartIndex);
+    }
+
+    [Fact]
+    public void ReplaceNextCommand_置換0件の場合はDocumentが変更されない()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt", content: "content");
+        harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab = tab;
+        tab.SearchText = "x";
+        tab.ReplaceText = "y";
+        tab.SetSearchResults(new[] { new SearchResult(0, 1) });
+        harness.ReplaceService.FirstResult = new ReplaceResult(
+            "content", 0, null, null, null);
+
+        harness.ViewModel.ReplaceNextCommand.Execute(null);
+
+        Assert.Equal("content", tab.Document.CurrentContent);
+        Assert.False(tab.Document.IsModified);
+    }
+
+    [Fact]
+    public void ReplaceAllCommand_実行すると全置換され件数が通知される()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt", content: "aaa");
+        harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab = tab;
+        tab.SearchText = "a";
+        tab.ReplaceText = "b";
+        tab.SetSearchResults(new[] { new SearchResult(0, 1) });
+        harness.ReplaceService.AllResult = new ReplaceResult("bbb", 3, null, null, null);
+
+        harness.ViewModel.ReplaceAllCommand.Execute(null);
+
+        Assert.Equal("bbb", tab.Document.CurrentContent);
+        Assert.True(tab.Document.IsModified);
+        Assert.Equal(0, tab.ReplaceNextStartIndex);
+        Assert.Empty(tab.SearchResults);
+        Assert.Contains("3件置換しました", harness.NotificationService.InfoMessages);
+    }
+
+    [Fact]
+    public void ReplaceAllCommand_結果が同一内容の場合は0件として通知され状態が維持される()
+    {
+        var harness = new Harness();
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt", content: "content");
+        harness.ViewModel.SearchReplacePanelViewModel.ActiveDocumentTab = tab;
+        tab.SearchText = "x";
+        tab.ReplaceText = "y";
+        tab.SetSearchResults(new[] { new SearchResult(0, 1) });
+        harness.ReplaceService.AllResult = new ReplaceResult("content", 0, null, null, null);
+
+        harness.ViewModel.ReplaceAllCommand.Execute(null);
+
+        Assert.Equal("content", tab.Document.CurrentContent);
+        Assert.False(tab.Document.IsModified);
+        Assert.Contains("0件置換しました", harness.NotificationService.InfoMessages);
+    }
+
+    // Execute：ファイルを開く
+
+    [Fact]
+    public void OpenCommand_実行するとファイルが開かれタブが追加される()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.OpenPath = @"C:\work\open.txt";
+        harness.FileService.ReadResult = new FileReadResult(
+            System.Text.Encoding.UTF8.GetBytes("opened"), false);
+        harness.EncodingService.DecodeResult = new DecodedText("opened", TextEncoding.Utf8);
+
+        harness.ViewModel.OpenCommand.Execute(null);
+
+        Assert.Equal(2, harness.Workspace.Tabs.Count);
+        var tab = Assert.IsType<DocumentTabViewModel>(harness.Workspace.ActiveTab);
+        Assert.Equal(@"C:\work\open.txt", tab.Document.FilePath);
+        Assert.Equal("open.txt", tab.Document.FileName);
+    }
+
+    [Fact]
+    public void OpenCommand_同一ファイルを再度開くと既存タブがアクティブになる()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.OpenPath = @"C:\work\open.txt";
+        harness.FileService.ReadResult = new FileReadResult(
+            System.Text.Encoding.UTF8.GetBytes("opened"), false);
+        harness.EncodingService.DecodeResult = new DecodedText("opened", TextEncoding.Utf8);
+
+        harness.ViewModel.OpenCommand.Execute(null);
+        var firstTab = harness.Workspace.ActiveTab;
+
+        // 別タブをアクティブにしてから再度同じファイルを開く
+        harness.Workspace.SetActiveTab(harness.Workspace.Tabs[0]);
+        harness.ViewModel.OpenCommand.Execute(null);
+
+        Assert.Equal(2, harness.Workspace.Tabs.Count);
+        Assert.Same(firstTab, harness.Workspace.ActiveTab);
+    }
+
+    // Execute：名前を付けて保存
+
+    [Fact]
+    public void SaveAsCommand_実行するとファイルへ保存されDocumentのパスが更新される()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = @"C:\work\saved.txt";
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveAsCommand.Execute(null);
+
+        Assert.Single(harness.FileService.WrittenFiles);
+        Assert.Equal(@"C:\work\saved.txt", tab.Document.FilePath);
+        Assert.Equal("saved.txt", tab.Document.FileName);
+        Assert.False(tab.Document.IsModified);
+        Assert.Equal("saved.txt", tab.DisplayTitle);
+        Assert.Empty(harness.NotificationService.ErrorMessages);
+    }
+
+    [Fact]
+    public void SaveAsCommand_ダイアログでキャンセルした場合_状態が維持される()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = null;
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveAsCommand.Execute(null);
+
+        Assert.Empty(harness.FileService.WrittenFiles);
+        Assert.Equal(@"C:\work\a.txt", tab.Document.FilePath);
+        Assert.True(tab.Document.IsModified);
+    }
+
+    [Fact]
+    public void SaveAsCommand_書き込み失敗時はエラー通知され状態が維持される()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = @"C:\work\saved.txt";
+        harness.FileService.WriteException = new IOException("disk error");
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveAsCommand.Execute(null);
+
+        Assert.Contains("名前を付けて保存に失敗しました。", harness.NotificationService.ErrorMessages);
+        Assert.Equal(@"C:\work\a.txt", tab.Document.FilePath);
+        Assert.True(tab.Document.IsModified);
+    }
+
+    [Fact]
+    public void SaveAsCommand_パスが使用中の場合_エラー通知され書き込まれない()
+    {
+        var harness = new Harness();
+        harness.FileDialogService.SavePath = @"C:\work\other.txt";
+        harness.DocumentPathRegistry.IsPathInUseResult = true;
+        var tab = harness.SetActiveDocument(
+            filePath: @"C:\work\a.txt", fileName: "a.txt");
+        tab.Document.UpdateContent("changed");
+
+        harness.ViewModel.SaveAsCommand.Execute(null);
+
+        Assert.Empty(harness.FileService.WrittenFiles);
+        Assert.NotEmpty(harness.NotificationService.ErrorMessages);
+        Assert.True(tab.Document.IsModified);
+    }
+
     // テストデータ作成ヘルパー
 
     private static Document CreateDocument(
@@ -606,12 +863,13 @@ public class MainWindowViewModelTests
         public List<(string Path, byte[] Bytes)> WrittenFiles { get; } = new();
         public Exception? ReadException { get; set; }
         public Exception? WriteException { get; set; }
+        public FileReadResult? ReadResult { get; set; }
 
         public FileReadResult ReadAllBytes(string filePath)
         {
             if (ReadException != null)
                 throw ReadException;
-            return new FileReadResult(Array.Empty<byte>(), false);
+            return ReadResult ?? new FileReadResult(Array.Empty<byte>(), false);
         }
 
         public void WriteAllBytes(string filePath, byte[] bytes)
@@ -624,7 +882,10 @@ public class MainWindowViewModelTests
 
     private sealed class FakeEncodingService : IEncodingService
     {
-        public DecodedText Decode(byte[] bytes) => new(string.Empty, TextEncoding.Utf8);
+        public DecodedText? DecodeResult { get; set; }
+
+        public DecodedText Decode(byte[] bytes) =>
+            DecodeResult ?? new DecodedText(string.Empty, TextEncoding.Utf8);
 
         public byte[] Encode(string text, TextEncoding encoding)
         {
@@ -725,16 +986,38 @@ public class MainWindowViewModelTests
     private sealed class FakeDiffService : IDiffService
     {
         public DiffResult Result { get; set; } = new DiffResult("l", "r", Array.Empty<DiffLine>());
+        public Exception? Exception { get; set; }
 
         public DiffResult Compare(string leftFileName, string rightFileName, string leftText, string rightText)
         {
+            if (Exception != null)
+                throw Exception;
             return Result;
         }
     }
 
     private sealed class FakeDocumentContentProvider : IDocumentContentProvider
     {
-        public Document GetDocument(Guid documentId) => throw new DocumentNotFoundException("not found");
-        public string GetDisplayTitle(Guid documentId) => throw new DocumentNotFoundException("not found");
+        private readonly Dictionary<Guid, (Document Document, string DisplayTitle)> _documents = new();
+
+        public FakeDocumentContentProvider AddDocument(Document document, string displayTitle)
+        {
+            _documents[document.Id] = (document, displayTitle);
+            return this;
+        }
+
+        public Document GetDocument(Guid documentId)
+        {
+            if (_documents.TryGetValue(documentId, out var info))
+                return info.Document;
+            throw new DocumentNotFoundException($"ID {documentId} のドキュメントが見つかりませんでした。");
+        }
+
+        public string GetDisplayTitle(Guid documentId)
+        {
+            if (_documents.TryGetValue(documentId, out var info))
+                return info.DisplayTitle;
+            throw new DocumentNotFoundException($"ID {documentId} のドキュメントが見つかりませんでした。");
+        }
     }
 }
