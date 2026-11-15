@@ -158,6 +158,38 @@ public class OpenDocumentUseCaseTests
         Assert.Throws<EncodingOperationException>(() => useCase.Execute());
     }
 
+    [Fact]
+    public void Execute_Detectで例外が発生した場合_例外が伝播しNormalizeToLfは呼ばれない()
+    {
+        var lineEndingService = new FakeLineEndingService(
+            LineEnding.CrLf, string.Empty,
+            detectException: new InvalidOperationException("検出失敗"));
+        var useCase = CreateUseCase(
+            new FakeFileDialogService(@"C:\work\sample.txt"),
+            new FakeFileService(new FileReadResult(new byte[] { 1 }, false)),
+            new FakeEncodingService(new DecodedText("decoded text", TextEncoding.Utf8)),
+            lineEndingService);
+
+        Assert.Throws<InvalidOperationException>(() => useCase.Execute());
+        Assert.Null(lineEndingService.LastNormalizedText);
+    }
+
+    [Fact]
+    public void Execute_NormalizeToLfで例外が発生した場合_例外が伝播する()
+    {
+        var lineEndingService = new FakeLineEndingService(
+            LineEnding.CrLf, string.Empty,
+            normalizeException: new InvalidOperationException("正規化失敗"));
+        var useCase = CreateUseCase(
+            new FakeFileDialogService(@"C:\work\sample.txt"),
+            new FakeFileService(new FileReadResult(new byte[] { 1 }, false)),
+            new FakeEncodingService(new DecodedText("decoded text", TextEncoding.Utf8)),
+            lineEndingService);
+
+        Assert.Throws<InvalidOperationException>(() => useCase.Execute());
+        Assert.Equal("decoded text", lineEndingService.LastDetectedText);
+    }
+
     // テストデータ作成ヘルパー
 
     private static OpenDocumentUseCase CreateUseCase(
@@ -237,25 +269,37 @@ public class OpenDocumentUseCaseTests
     {
         private readonly LineEnding _detected;
         private readonly string _normalized;
+        private readonly Exception? _detectException;
+        private readonly Exception? _normalizeException;
 
         public string? LastDetectedText { get; private set; }
         public string? LastNormalizedText { get; private set; }
 
-        public FakeLineEndingService(LineEnding detected, string normalized)
+        public FakeLineEndingService(
+            LineEnding detected,
+            string normalized,
+            Exception? detectException = null,
+            Exception? normalizeException = null)
         {
             _detected = detected;
             _normalized = normalized;
+            _detectException = detectException;
+            _normalizeException = normalizeException;
         }
 
         public LineEnding Detect(string text)
         {
             LastDetectedText = text;
+            if (_detectException != null)
+                throw _detectException;
             return _detected;
         }
 
         public string NormalizeToLf(string text)
         {
             LastNormalizedText = text;
+            if (_normalizeException != null)
+                throw _normalizeException;
             return _normalized;
         }
 
